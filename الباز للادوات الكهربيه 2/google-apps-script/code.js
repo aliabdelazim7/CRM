@@ -15,6 +15,10 @@ const SHEETS_SCHEMA = {
     "Customer ID", "Name", "Phone Number", "Address", "Total Purchases", 
     "Outstanding Balance", "Status"
   ],
+  "Archive_Customers": [
+    "Customer ID", "Name", "Phone Number", "Address", "Total Purchases", 
+    "Outstanding Balance", "Status", "Archive Date"
+  ],
   "Invoices": [
     "Invoice Number", "Customer ID", "Customer Name", "Invoice Date", 
     "Total Amount", "Paid Amount", "Remaining Amount", "Payment Method", 
@@ -68,6 +72,9 @@ function initializeDatabase() {
     ];
     settingsSheet.getRange(2, 1, defaultSettings.length, 2).setValues(defaultSettings);
   }
+
+  // Clean up archived customers older than 60 days
+  cleanupOldArchivedCustomers();
 }
 
 // GET request handler: Returns all database tables as JSON
@@ -242,8 +249,6 @@ function handleSaveProduct(product) {
 // Handler: Save or Update a Customer
 function handleSaveCustomer(customer) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("Customers");
-  const headers = SHEETS_SCHEMA["Customers"];
   const customerId = customer["Customer ID"];
   
   if (!customerId) throw new Error("Customer ID is required");
@@ -251,28 +256,128 @@ function handleSaveCustomer(customer) {
   customer["Status"] = customer["Status"] || "Active";
   customer["Total Purchases"] = parseFloat(customer["Total Purchases"]) || 0;
   customer["Outstanding Balance"] = parseFloat(customer["Outstanding Balance"]) || 0;
+
+  const isArchived = customer["Status"] === "Archived";
   
-  const lastRow = sheet.getLastRow();
-  let foundRow = -1;
-  
-  if (lastRow > 1) {
-    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-    for (let i = 0; i < ids.length; i++) {
-      if (ids[i][0] === customerId) {
-        foundRow = i + 2;
-        break;
+  if (isArchived) {
+    // 1. Remove from active Customers sheet if exists
+    const activeSheet = ss.getSheetByName("Customers");
+    const activeLastRow = activeSheet.getLastRow();
+    if (activeLastRow > 1) {
+      const ids = activeSheet.getRange(2, 1, activeLastRow - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i][0] === customerId) {
+          activeSheet.deleteRow(i + 2);
+          break;
+        }
       }
     }
-  }
-  
-  const rowData = mapObjectToRow(customer, headers);
-  
-  if (foundRow !== -1) {
-    sheet.getRange(foundRow, 1, 1, headers.length).setValues([rowData]);
-    return { action: "update", customerId: customerId };
+
+    // 2. Save in Archive_Customers sheet
+    const archiveSheet = ss.getSheetByName("Archive_Customers");
+    const archiveHeaders = SHEETS_SCHEMA["Archive_Customers"];
+    const archiveLastRow = archiveSheet.getLastRow();
+    
+    // Set Archive Date to current date in YYYY-MM-DD
+    const tz = ss.getSpreadsheetTimeZone();
+    if (!customer["Archive Date"]) {
+      customer["Archive Date"] = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+    }
+
+    let foundArchiveRow = -1;
+    if (archiveLastRow > 1) {
+      const ids = archiveSheet.getRange(2, 1, archiveLastRow - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i][0] === customerId) {
+          foundArchiveRow = i + 2;
+          break;
+        }
+      }
+    }
+
+    const rowData = mapObjectToRow(customer, archiveHeaders);
+    if (foundArchiveRow !== -1) {
+      archiveSheet.getRange(foundArchiveRow, 1, 1, archiveHeaders.length).setValues([rowData]);
+      return { action: "update_archive", customerId: customerId };
+    } else {
+      archiveSheet.appendRow(rowData);
+      return { action: "create_archive", customerId: customerId };
+    }
+
   } else {
-    sheet.appendRow(rowData);
-    return { action: "create", customerId: customerId };
+    // Active Customer (Create/Update/Restore)
+    // 1. Remove from Archive_Customers sheet if exists
+    const archiveSheet = ss.getSheetByName("Archive_Customers");
+    const archiveLastRow = archiveSheet.getLastRow();
+    if (archiveLastRow > 1) {
+      const ids = archiveSheet.getRange(2, 1, archiveLastRow - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i][0] === customerId) {
+          archiveSheet.deleteRow(i + 2);
+          break;
+        }
+      }
+    }
+
+    // Remove Archive Date property if it exists
+    delete customer["Archive Date"];
+
+    // 2. Save in Customers sheet
+    const activeSheet = ss.getSheetByName("Customers");
+    const activeHeaders = SHEETS_SCHEMA["Customers"];
+    const activeLastRow = activeSheet.getLastRow();
+    
+    let foundActiveRow = -1;
+    if (activeLastRow > 1) {
+      const ids = activeSheet.getRange(2, 1, activeLastRow - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i][0] === customerId) {
+          foundActiveRow = i + 2;
+          break;
+        }
+      }
+    }
+
+    const rowData = mapObjectToRow(customer, activeHeaders);
+    if (foundActiveRow !== -1) {
+      activeSheet.getRange(foundActiveRow, 1, 1, activeHeaders.length).setValues([rowData]);
+      return { action: "update", customerId: customerId };
+    } else {
+      activeSheet.appendRow(rowData);
+      return { action: "create", customerId: customerId };
+    }
+  }
+}
+
+// Clean up archived customers older than 60 days
+function cleanupOldArchivedCustomers() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Archive_Customers");
+  if (!sheet) return;
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+  
+  const headers = SHEETS_SCHEMA["Archive_Customers"];
+  const archiveDateColIndex = headers.indexOf("Archive Date");
+  if (archiveDateColIndex === -1) return;
+  
+  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  const now = new Date().getTime();
+  const sixtyDaysInMs = 60 * 24 * 60 * 60 * 1000;
+  
+  // Iterate backwards to avoid index shifting when deleting rows
+  for (let i = values.length - 1; i >= 0; i--) {
+    const row = values[i];
+    const archiveDateVal = row[archiveDateColIndex];
+    if (archiveDateVal) {
+      const archiveDate = new Date(archiveDateVal);
+      if (!isNaN(archiveDate.getTime())) {
+        if (now - archiveDate.getTime() > sixtyDaysInMs) {
+          sheet.deleteRow(i + 2);
+        }
+      }
+    }
   }
 }
 

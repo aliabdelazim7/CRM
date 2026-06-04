@@ -56,7 +56,8 @@ const demoDatabase = {
     { "Key": "Currency", "Value": "EGP" },
     { "Key": "Admin Email", "Value": "admin@elbaz.com" },
     { "Key": "Admin Password", "Value": "admin" }
-  ]
+  ],
+  Archive_Customers: []
 };
 
 function normalizeDate(dateVal) {
@@ -90,6 +91,13 @@ function normalizeDbDates(db) {
       }
     });
   }
+  if (Array.isArray(db.Archive_Customers)) {
+    db.Archive_Customers.forEach(cust => {
+      if (cust["Archive Date"]) {
+        cust["Archive Date"] = normalizeDate(cust["Archive Date"]);
+      }
+    });
+  }
   return db;
 }
 
@@ -97,6 +105,7 @@ class ApiService {
   constructor() {
     this.settings = this.loadConfig();
     this.db = this.loadLocalDb();
+    this.cleanupLocalArchivedCustomers();
     this.isMockMode = !this.settings.webAppUrl;
     this.syncListeners = [];
     this.isProcessingQueue = false;
@@ -160,14 +169,43 @@ class ApiService {
     const data = localStorage.getItem(LOCAL_DB_KEY);
     if (data) {
       try {
-        return normalizeDbDates(JSON.parse(data));
+        const db = JSON.parse(data);
+        if (!db.Archive_Customers) {
+          db.Archive_Customers = [];
+        }
+        return normalizeDbDates(db);
       } catch (e) {
-        return normalizeDbDates(demoDatabase);
+        const db = JSON.parse(JSON.stringify(demoDatabase));
+        return normalizeDbDates(db);
       }
     }
     // Populate with demo data on first load
     localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(demoDatabase));
-    return normalizeDbDates(demoDatabase);
+    return normalizeDbDates(JSON.parse(JSON.stringify(demoDatabase)));
+  }
+
+  cleanupLocalArchivedCustomers() {
+    if (!this.db.Archive_Customers) {
+      this.db.Archive_Customers = [];
+      return;
+    }
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const thresholdTime = sixtyDaysAgo.getTime();
+
+    const originalLength = this.db.Archive_Customers.length;
+    this.db.Archive_Customers = this.db.Archive_Customers.filter(customer => {
+      const archiveDateStr = customer["Archive Date"];
+      if (!archiveDateStr) return true; // Keep if no archive date is specified
+      const archiveDate = new Date(archiveDateStr);
+      if (isNaN(archiveDate.getTime())) return true; // Keep if invalid date
+      return archiveDate.getTime() >= thresholdTime;
+    });
+
+    if (this.db.Archive_Customers.length !== originalLength) {
+      console.log(`API: Pruned ${originalLength - this.db.Archive_Customers.length} expired archived customer(s) from local DB.`);
+      this.saveLocalDb();
+    }
   }
 
   saveLocalDb() {
@@ -371,11 +409,47 @@ class ApiService {
     customer["Total Purchases"] = parseFloat(customer["Total Purchases"]) || 0;
     customer["Outstanding Balance"] = parseFloat(customer["Outstanding Balance"]) || 0;
 
-    const existingIndex = this.db.Customers.findIndex(c => c["Customer ID"] === id);
-    if (existingIndex !== -1) {
-      this.db.Customers[existingIndex] = customer;
+    // Ensure Archive_Customers array exists in mock DB
+    if (!this.db.Archive_Customers) {
+      this.db.Archive_Customers = [];
+    }
+
+    if (customer["Status"] === "Archived") {
+      // Set Archive Date to current date if not set
+      if (!customer["Archive Date"]) {
+        customer["Archive Date"] = new Date().toISOString().split('T')[0];
+      }
+
+      // Remove from active list if present
+      const activeIdx = this.db.Customers.findIndex(c => c["Customer ID"] === id);
+      if (activeIdx !== -1) {
+        this.db.Customers.splice(activeIdx, 1);
+      }
+
+      // Save/Update in Archive_Customers list
+      const archIdx = this.db.Archive_Customers.findIndex(c => c["Customer ID"] === id);
+      if (archIdx !== -1) {
+        this.db.Archive_Customers[archIdx] = customer;
+      } else {
+        this.db.Archive_Customers.push(customer);
+      }
     } else {
-      this.db.Customers.push(customer);
+      // Remove from Archive_Customers if present
+      const archIdx = this.db.Archive_Customers.findIndex(c => c["Customer ID"] === id);
+      if (archIdx !== -1) {
+        this.db.Archive_Customers.splice(archIdx, 1);
+      }
+
+      // Remove Archive Date property if it exists
+      delete customer["Archive Date"];
+
+      // Save/Update in Customers list
+      const activeIdx = this.db.Customers.findIndex(c => c["Customer ID"] === id);
+      if (activeIdx !== -1) {
+        this.db.Customers[activeIdx] = customer;
+      } else {
+        this.db.Customers.push(customer);
+      }
     }
   }
 

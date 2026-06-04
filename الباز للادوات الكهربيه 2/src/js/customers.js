@@ -31,13 +31,14 @@ document.addEventListener("DOMContentLoaded", () => {
  * Main CRM Module Renderer
  */
 window.renderCustomers = function() {
-  const customers = window.appState.db.Customers || [];
-
   const searchQuery = document.getElementById("cust-search")?.value.toLowerCase().trim() || "";
   const debtFilter = document.getElementById("cust-filter-debt")?.value || "All";
+  const isArchivedMode = debtFilter === "Archived";
+
+  const customers = isArchivedMode ? (window.appState.db.Archive_Customers || []) : (window.appState.db.Customers || []);
 
   let filtered = customers.filter(c => {
-    const isNotArchived = (c["Status"] || "Active") !== "Archived";
+    const isNotArchived = isArchivedMode || (c["Status"] || "Active") !== "Archived";
     const isNotGeneric = c["Customer ID"] !== "GENERIC";
 
     const matchesSearch = 
@@ -48,6 +49,7 @@ window.renderCustomers = function() {
 
     const balance = parseFloat(c["Outstanding Balance"]) || 0;
     const matchesDebt = 
+      isArchivedMode ||
       debtFilter === "All" ||
       (debtFilter === "With Debt" && balance > 0) ||
       (debtFilter === "No Debt" && balance === 0);
@@ -62,7 +64,13 @@ window.renderCustomers = function() {
   });
 
   const infoText = document.getElementById("cust-table-info");
-  if (infoText) infoText.textContent = `عرض إجمالي ${filtered.length} عميل مسجل حالياً`;
+  if (infoText) {
+    if (isArchivedMode) {
+      infoText.textContent = `عرض إجمالي ${filtered.length} عميل مؤرشف (سلة المحذوفات)`;
+    } else {
+      infoText.textContent = `عرض إجمالي ${filtered.length} عميل مسجل حالياً`;
+    }
+  }
 
   const tbody = document.getElementById("customers-table-body");
   if (!tbody) return;
@@ -71,7 +79,7 @@ window.renderCustomers = function() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="py-8 text-center text-xs text-slate-400 font-medium">
-          لم يتم العثور على حسابات عملاء مطابقة للبحث أو المديونيات.
+          ${isArchivedMode ? "لا يوجد عملاء مؤرشفين حالياً." : "لم يتم العثور على حسابات عملاء مطابقة للبحث أو المديونيات."}
         </td>
       </tr>
     `;
@@ -87,6 +95,27 @@ window.renderCustomers = function() {
     const custInvoices = invoices.filter(inv => inv["Customer ID"] === c["Customer ID"]);
     const totalDiscounts = custInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
 
+    let actionsHtml = "";
+    if (isArchivedMode) {
+      actionsHtml = `
+        <button onclick="restoreCustomer('${c["Customer ID"]}')" class="p-1 border border-emerald-200 rounded text-emerald-600 hover:bg-emerald-50" title="استرجاع الحساب">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+    } else {
+      actionsHtml = `
+        <button onclick="openCustomerDrawer('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-slate-600 hover:bg-slate-100" title="كشف الحساب">
+          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+        </button>
+        <button onclick="openCustomerModal('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-indigo-600 hover:bg-indigo-50" title="تعديل البيانات">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+        </button>
+        <button onclick="archiveCustomer('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-rose-600 hover:bg-rose-50" title="أرشفة الحساب">
+          <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+    }
+
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
         <td class="py-3 px-6 font-mono font-semibold text-slate-500">${c["Customer ID"]}</td>
@@ -98,15 +127,7 @@ window.renderCustomers = function() {
         <td class="py-3 px-6 text-left font-mono ${debtClass}">${formatCurrency(debtVal)}</td>
         <td class="py-3 px-6 text-center">
           <div class="flex items-center justify-center space-x-reverse space-x-1">
-            <button onclick="openCustomerDrawer('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-slate-600 hover:bg-slate-100" title="كشف الحساب">
-              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            </button>
-            <button onclick="openCustomerModal('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-indigo-600 hover:bg-indigo-50" title="تعديل البيانات">
-              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-            </button>
-            <button onclick="archiveCustomer('${c["Customer ID"]}')" class="p-1 border border-slate-200 rounded text-rose-600 hover:bg-rose-50" title="أرشفة الحساب">
-              <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
-            </button>
+            ${actionsHtml}
           </div>
         </td>
       </tr>
@@ -352,6 +373,33 @@ window.archiveCustomer = async function(customerId) {
     }
   } catch (error) {
     showToast(`فشلت أرشفة العميل: ${error.message}`, "error");
+  } finally {
+    hideLoader();
+  }
+};
+
+/**
+ * Restore Archived Customer
+ */
+window.restoreCustomer = async function(customerId) {
+  const custObj = (window.appState.db.Archive_Customers || []).find(c => c["Customer ID"] === customerId);
+  if (!custObj) return;
+
+  const confirmed = confirm(`هل تريد استرجاع العميل: ${custObj["Name"]} إلى قائمة العملاء النشطين؟`);
+  if (!confirmed) return;
+
+  showLoader("جاري استرجاع الحساب...");
+  try {
+    const updatedCust = { ...custObj, Status: "Active" };
+    delete updatedCust["Archive Date"];
+    
+    await api.saveCustomer(updatedCust);
+    showToast("تم استرجاع العميل بنجاح", "success");
+    if (!api.isMockMode) {
+      await api.syncData();
+    }
+  } catch (error) {
+    showToast(`فشلت عملية الاسترجاع: ${error.message}`, "error");
   } finally {
     hideLoader();
   }
