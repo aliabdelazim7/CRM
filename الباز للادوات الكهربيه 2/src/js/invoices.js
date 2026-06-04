@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("pos-barcode-mode-btn")?.addEventListener("click", toggleBarcodeMode);
 
   document.getElementById("pay-modal-paid")?.addEventListener("input", recalculateCheckoutPaymentBalances);
+  document.getElementById("pay-modal-discount")?.addEventListener("input", recalculateCheckoutPaymentBalances);
 
   // Quick Customer Inside Checkout Modal
   document.getElementById("pay-modal-add-customer-quick-btn")?.addEventListener("click", () => {
@@ -344,6 +345,13 @@ function openCheckoutPaymentModal() {
   posCart.forEach(i => total += i.totalPrice);
 
   document.getElementById("pay-modal-total-label").textContent = formatCurrency(total);
+  
+  const discountInput = document.getElementById("pay-modal-discount");
+  if (discountInput) discountInput.value = 0;
+  
+  const netLabel = document.getElementById("pay-modal-net-label");
+  if (netLabel) netLabel.textContent = formatCurrency(total);
+
   const paidInput = document.getElementById("pay-modal-paid");
   
   paidInput.value = total;
@@ -385,11 +393,19 @@ function recalculateCheckoutPaymentBalances() {
   let total = 0;
   posCart.forEach(i => total += i.totalPrice);
 
+  const discount = parseFloat(document.getElementById("pay-modal-discount")?.value) || 0;
+  const net = Math.max(0, total - discount);
+
+  const netLabel = document.getElementById("pay-modal-net-label");
+  if (netLabel) {
+    netLabel.textContent = formatCurrency(net);
+  }
+
   const paid = parseFloat(document.getElementById("pay-modal-paid").value) || 0;
-  const remaining = Math.max(0, total - paid);
+  const remaining = Math.max(0, net - paid);
 
   const remInput = document.getElementById("pay-modal-remaining");
-  remInput.value = remaining;
+  remInput.value = remaining.toFixed(2);
 
   if (remaining > 0) {
     remInput.classList.remove("text-emerald-500");
@@ -480,7 +496,8 @@ async function finalizePOSOrder(shouldPrint = true) {
   let totalAmount = 0;
   posCart.forEach(item => totalAmount += item.totalPrice);
 
-  const remainingAmount = Math.max(0, totalAmount - paidAmount);
+  const discountAmount = parseFloat(document.getElementById("pay-modal-discount")?.value) || 0;
+  const remainingAmount = Math.max(0, totalAmount - discountAmount - paidAmount);
   
   if (customerId === "GENERIC" && remainingAmount > 0) {
     showToast("تنبيه: لا يمكن البيع بالآجل للعملاء النقديين المجهولين. يرجى اختيار حساب العميل أو تسجيل حساب جديد لتسجيل الدين.", "warning");
@@ -515,7 +532,8 @@ async function finalizePOSOrder(shouldPrint = true) {
     "Remaining Amount": remainingAmount,
     "Payment Method": paymentMethod,
     "Status": statusLocalized,
-    "Notes": notes
+    "Notes": notes,
+    "Discount": discountAmount
   };
 
   const invoiceItems = posCart.map(item => {
@@ -622,6 +640,18 @@ function printInvoice(invoice, items) {
   }).join("");
 
   document.getElementById("print-subtotal").textContent = formatCurrency(invoice["Total Amount"]);
+  
+  const discountVal = parseFloat(invoice["Discount"]) || 0;
+  const discountRow = document.getElementById("print-discount-container");
+  if (discountRow) {
+    if (discountVal > 0) {
+      discountRow.classList.remove("hidden");
+      document.getElementById("print-discount").textContent = formatCurrency(discountVal);
+    } else {
+      discountRow.classList.add("hidden");
+    }
+  }
+
   document.getElementById("print-paid").textContent = formatCurrency(invoice["Paid Amount"]);
   document.getElementById("print-due").textContent = formatCurrency(invoice["Remaining Amount"]);
 

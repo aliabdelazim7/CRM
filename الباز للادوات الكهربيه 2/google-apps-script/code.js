@@ -18,7 +18,7 @@ const SHEETS_SCHEMA = {
   "Invoices": [
     "Invoice Number", "Customer ID", "Customer Name", "Invoice Date", 
     "Total Amount", "Paid Amount", "Remaining Amount", "Payment Method", 
-    "Status", "Notes"
+    "Status", "Notes", "Discount"
   ],
   "InvoiceItems": [
     "Item ID", "Invoice Number", "Product ID", "Product Name", 
@@ -38,13 +38,21 @@ function initializeDatabase() {
   
   for (const sheetName in SHEETS_SCHEMA) {
     let sheet = ss.getSheetByName(sheetName);
+    const headers = SHEETS_SCHEMA[sheetName];
     if (!sheet) {
       sheet = ss.insertSheet(sheetName);
       // Format headers
-      const headers = SHEETS_SCHEMA[sheetName];
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
       sheet.setFrozenRows(1);
+    } else {
+      // Ensure missing headers are appended automatically
+      const lastCol = sheet.getLastColumn();
+      if (lastCol < headers.length) {
+        sheet.getRange(1, lastCol + 1, 1, headers.length - lastCol)
+             .setValues([headers.slice(lastCol)])
+             .setFontWeight("bold").setBackground("#f3f4f6");
+      }
     }
   }
   
@@ -405,6 +413,7 @@ function handleAddPayment(paymentData) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const invoiceNumber = paymentData.invoiceNumber;
   const amountToPay = parseFloat(paymentData.amount) || 0;
+  const discountRemaining = paymentData.discountRemaining === true;
   
   if (!invoiceNumber || amountToPay <= 0) {
     throw new Error("Invoice number and positive payment amount are required");
@@ -443,7 +452,10 @@ function handleAddPayment(paymentData) {
   
   // Calculate new payment status
   const newPaid = currentPaid + amountToPay;
-  const newRemaining = Math.max(0, totalAmount - newPaid);
+  let newRemaining = Math.max(0, totalAmount - newPaid);
+  if (discountRemaining) {
+    newRemaining = 0;
+  }
   let newStatus = "Partially Paid";
   if (newRemaining <= 0) {
     newStatus = "Paid";
@@ -467,7 +479,8 @@ function handleAddPayment(paymentData) {
       if (customersRows[i][custIdIndex] === customerId) {
         const custFoundRowIndex = i + 2;
         const currentBalance = parseFloat(customersRows[i][custBalIndex]) || 0;
-        const newBalance = Math.max(0, currentBalance - amountToPay);
+        const debtCleared = discountRemaining ? (totalAmount - currentPaid) : amountToPay;
+        const newBalance = Math.max(0, currentBalance - debtCleared);
         customersSheet.getRange(custFoundRowIndex, custBalIndex + 1).setValue(newBalance);
         break;
       }

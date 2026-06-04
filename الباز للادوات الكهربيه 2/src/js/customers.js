@@ -133,6 +133,37 @@ async function handleCustomerFormSubmit(e) {
   const totalPurch = existing ? parseFloat(existing["Total Purchases"]) || 0 : 0;
   const outBal = existing ? parseFloat(existing["Outstanding Balance"]) || 0 : 0;
 
+  // Compile opening balance invoice if needed
+  let openInvoice = null;
+  let openInvoiceItems = [];
+  const openingBalance = parseFloat(document.getElementById("cust-form-opening-balance")?.value) || 0;
+  if (!existing && openingBalance > 0) {
+    const nextInvoiceNumber = "INV-OPEN-" + Math.floor(10000 + Math.random() * 90000);
+    openInvoice = {
+      "Invoice Number": nextInvoiceNumber,
+      "Customer ID": id,
+      "Customer Name": name,
+      "Invoice Date": getLocalDateString(),
+      "Total Amount": openingBalance,
+      "Paid Amount": 0,
+      "Remaining Amount": openingBalance,
+      "Payment Method": "Cash",
+      "Status": "Unpaid",
+      "Notes": "رصيد افتتاحي / مديونية سابقة عند تسجيل الحساب",
+      "Discount": 0
+    };
+    openInvoiceItems = [{
+      "Item ID": generateId("ITEM"),
+      "Invoice Number": nextInvoiceNumber,
+      "Product ID": "PROD-OPEN",
+      "Product Name": "رصيد افتتاحي / ديون سابقة",
+      "Quantity": 1,
+      "Purchase Price": 0,
+      "Selling Price": openingBalance,
+      "Total Price": openingBalance
+    }];
+  }
+
   // Compile invoice payload if needed
   let invoice = null;
   let invoiceItems = [];
@@ -160,7 +191,8 @@ async function handleCustomerFormSubmit(e) {
       "Remaining Amount": remainingAmount,
       "Payment Method": paymentMethod,
       "Status": status,
-      "Notes": "فاتورة مبيعات أولية عند تسجيل حساب العميل"
+      "Notes": "فاتورة مبيعات أولية عند تسجيل حساب العميل",
+      "Discount": 0
     };
 
     invoiceItems = custModalCart.map(item => {
@@ -192,7 +224,12 @@ async function handleCustomerFormSubmit(e) {
     // 1. Save customer profile
     await api.saveCustomer(payload);
 
-    // 2. Save invoice if applicable
+    // 2. Save opening balance invoice if applicable
+    if (openInvoice && openInvoiceItems.length > 0) {
+      await api.saveInvoice(openInvoice, openInvoiceItems);
+    }
+
+    // 3. Save invoice if applicable
     if (invoice && invoiceItems.length > 0) {
       await api.saveInvoice(invoice, invoiceItems);
       
@@ -255,6 +292,10 @@ window.openCustomerModal = function(customerId = null) {
       toggleCheckbox.checked = false;
       toggleCheckbox.disabled = true;
     }
+
+    // Hide opening balance field in edit mode
+    const obContainer = document.getElementById("cust-form-opening-balance-container");
+    if (obContainer) obContainer.classList.add("hidden");
   } else {
     title.textContent = "تسجيل عميل جديد بالمتجر";
     document.getElementById("cust-form-id").value = generateId("CUST");
@@ -265,6 +306,12 @@ window.openCustomerModal = function(customerId = null) {
       toggleCheckbox.checked = false;
       toggleCheckbox.disabled = false;
     }
+
+    // Show opening balance field in create mode
+    const obContainer = document.getElementById("cust-form-opening-balance-container");
+    if (obContainer) obContainer.classList.remove("hidden");
+    const obInput = document.getElementById("cust-form-opening-balance");
+    if (obInput) obInput.value = "0";
   }
 
   modal.classList.remove("hidden");
@@ -420,6 +467,7 @@ function renderCustomerInvoiceList(customerId) {
             <input type="number" step="0.01" max="${rem}" id="pay-single-amount-${invNumber}" placeholder="المبلغ" value="${rem}" class="w-20 border border-slate-200 rounded py-1 px-1.5 text-[10px] bg-white focus:outline-none font-mono text-left pl-1">
             <button type="button" onclick="submitSingleInvoicePayment('${invNumber}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-bold transition-all">تسجيل دفعة</button>
             <button type="button" onclick="submitSingleInvoicePayment('${invNumber}', ${rem})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition-all">سداد بالكامل</button>
+            <button type="button" onclick="submitSingleInvoicePayment('${invNumber}', null, true)" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold transition-all" title="تسجيل الدفعة الحالية وإعفاء العميل من باقي المبلغ كخصم تسوية">خصم المتبقي</button>
           </div>
         </div>
       `;
@@ -474,15 +522,15 @@ function renderCustomerInvoiceList(customerId) {
 /**
  * Handle payments directly from specific invoices
  */
-window.submitSingleInvoicePayment = async function(invoiceNumber, fixedAmount = null) {
+window.submitSingleInvoicePayment = async function(invoiceNumber, fixedAmount = null, discountRemaining = false) {
   let amount = fixedAmount;
   if (amount === null) {
     const input = document.getElementById(`pay-single-amount-${invoiceNumber}`);
     amount = parseFloat(input?.value) || 0;
   }
 
-  if (amount <= 0) {
-    showToast("برجاء إدخال مبلغ صحيح أكبر من الصفر.", "warning");
+  if (amount < 0 || (amount === 0 && !discountRemaining)) {
+    showToast("برجاء إدخال مبلغ صحيح أكبر من أو يساوي الصفر.", "warning");
     return;
   }
 
@@ -496,10 +544,17 @@ window.submitSingleInvoicePayment = async function(invoiceNumber, fixedAmount = 
     return;
   }
 
-  showLoader("جاري تسجيل الدفعة...");
+  const msg = discountRemaining 
+    ? `جاري تسوية الفاتورة وإعفاء المتبقي (${formatCurrency(rem - amount)}) كخصم...` 
+    : "جاري تسجيل الدفعة...";
+
+  showLoader(msg);
   try {
-    await api.addPayment(invoiceNumber, amount);
-    showToast(`تم تسجيل دفعة بقيمة ${formatCurrency(amount)} للفاتورة ${invoiceNumber}`, "success");
+    await api.addPayment(invoiceNumber, amount, discountRemaining);
+    const successMsg = discountRemaining
+      ? `تم تسوية الفاتورة ${invoiceNumber} بالكامل مع خصم الباقي`
+      : `تم تسجيل دفعة بقيمة ${formatCurrency(amount)} للفاتورة ${invoiceNumber}`;
+    showToast(successMsg, "success");
     
     if (!api.isMockMode) {
       await api.syncData();

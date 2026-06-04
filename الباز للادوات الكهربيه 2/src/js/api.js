@@ -14,7 +14,8 @@ const defaultSettings = {
   phone: "+201018907086",
   currency: "EGP",
   adminEmail: "admin@elbaz.com",
-  adminPassword: "admin"
+  adminPassword: "admin",
+  settingsPassword: "admin_settings"
 };
 
 // Initial Arabic electrical store mockup data
@@ -119,6 +120,10 @@ class ApiService {
         if (!config.adminEmail) {
           config.adminEmail = defaultSettings.adminEmail;
           config.adminPassword = defaultSettings.adminPassword;
+          modified = true;
+        }
+        if (!config.settingsPassword) {
+          config.settingsPassword = defaultSettings.settingsPassword;
           modified = true;
         }
         if (modified) {
@@ -272,8 +277,8 @@ class ApiService {
     return this.postAction("updateSettings", settingsList);
   }
 
-  async addPayment(invoiceNumber, amount) {
-    return this.postAction("addPayment", { invoiceNumber, amount });
+  async addPayment(invoiceNumber, amount, discountRemaining = false) {
+    return this.postAction("addPayment", { invoiceNumber, amount, discountRemaining });
   }
 
   // --- Mock Execution for offline/independent run ---
@@ -351,6 +356,7 @@ class ApiService {
     invoice["Total Amount"] = parseFloat(invoice["Total Amount"]) || 0;
     invoice["Paid Amount"] = parseFloat(invoice["Paid Amount"]) || 0;
     invoice["Remaining Amount"] = parseFloat(invoice["Remaining Amount"]) || 0;
+    invoice["Discount"] = parseFloat(invoice["Discount"]) || 0;
     
     this.db.Invoices.unshift(invoice);
 
@@ -407,8 +413,9 @@ class ApiService {
     localStorage.setItem(API_CONFIG_KEY, JSON.stringify(this.settings));
   }
 
-  mockAddPayment({ invoiceNumber, amount }) {
+  mockAddPayment({ invoiceNumber, amount, discountRemaining }) {
     const amt = parseFloat(amount) || 0;
+    const isDiscount = discountRemaining === true || discountRemaining === "true";
     const invIndex = this.db.Invoices.findIndex(i => i["Invoice Number"] === invoiceNumber);
     
     if (invIndex === -1) throw new Error("فاتورة غير موجودة: " + invoiceNumber);
@@ -418,7 +425,10 @@ class ApiService {
     const curPaid = parseFloat(invoice["Paid Amount"]) || 0;
     
     const newPaid = curPaid + amt;
-    const newRem = Math.max(0, total - newPaid);
+    let newRem = Math.max(0, total - newPaid);
+    if (isDiscount) {
+      newRem = 0;
+    }
     let newStatus = "Partially Paid";
     if (newRem <= 0) {
       newStatus = "Paid";
@@ -433,7 +443,8 @@ class ApiService {
       const cIndex = this.db.Customers.findIndex(c => c["Customer ID"] === custId);
       if (cIndex !== -1) {
         const curBal = parseFloat(this.db.Customers[cIndex]["Outstanding Balance"]) || 0;
-        this.db.Customers[cIndex]["Outstanding Balance"] = Math.max(0, curBal - amt);
+        const debtCleared = isDiscount ? (total - curPaid) : amt;
+        this.db.Customers[cIndex]["Outstanding Balance"] = Math.max(0, curBal - debtCleared);
       }
     }
   }

@@ -51,6 +51,20 @@ function initRouter() {
     if (!routes.includes(hash)) {
       hash = "dashboard";
     }
+
+    // Intercept settings page access with a password gate
+    if (hash === "settings") {
+      const config = api.loadConfig();
+      const settingsPass = config.settingsPassword || "admin_settings";
+      const enteredPass = prompt("برجاء إدخال كلمة مرور مدير النظام للوصول لصفحة الإعدادات:");
+      if (enteredPass !== settingsPass) {
+        showToast("خطأ: كلمة مرور الإعدادات غير صحيحة!", "error");
+        // Revert hash to the previous valid route, or dashboard if none
+        const prevRoute = window.appState.currentRoute === "settings" ? "dashboard" : (window.appState.currentRoute || "dashboard");
+        window.location.hash = `#${prevRoute}`;
+        return;
+      }
+    }
     
     window.appState.currentRoute = hash;
     
@@ -159,6 +173,7 @@ function initGlobalEvents() {
       const newPhone = document.getElementById("settings-phone").value.trim();
       const newEmail = document.getElementById("settings-admin-email").value.trim();
       const newPass = document.getElementById("settings-admin-password").value.trim();
+      const newSettingsPass = document.getElementById("settings-page-password").value.trim();
 
       showLoader("Saving Settings & Connecting...");
 
@@ -171,7 +186,8 @@ function initGlobalEvents() {
           address: newAddress,
           phone: newPhone,
           adminEmail: newEmail,
-          adminPassword: newPass
+          adminPassword: newPass,
+          settingsPassword: newSettingsPass
         });
 
         // Try syncing / write to sheets
@@ -181,7 +197,8 @@ function initGlobalEvents() {
           { Key: "Phone Number", Value: newPhone },
           { Key: "Currency", Value: newCurrency },
           { Key: "Admin Email", Value: newEmail },
-          { Key: "Admin Password", Value: newPass }
+          { Key: "Admin Password", Value: newPass },
+          { Key: "Settings Password", Value: newSettingsPass }
         ]);
         
         loadSettingsFromConfig();
@@ -351,7 +368,8 @@ function loadSettingsFromConfig() {
     address: config.address || "",
     phone: config.phone || "",
     adminEmail: config.adminEmail || "admin@elbaz.com",
-    adminPassword: config.adminPassword || "admin"
+    adminPassword: config.adminPassword || "admin",
+    settingsPassword: config.settingsPassword || "admin_settings"
   };
   
   const navTitle = document.getElementById("nav-business-title");
@@ -367,8 +385,10 @@ function loadSettingsFromConfig() {
   // Set settings form inputs
   const emailInput = document.getElementById("settings-admin-email");
   const passInput = document.getElementById("settings-admin-password");
+  const settingsPassInput = document.getElementById("settings-page-password");
   if (emailInput) emailInput.value = window.appState.settings.adminEmail;
   if (passInput) passInput.value = window.appState.settings.adminPassword;
+  if (settingsPassInput) settingsPassInput.value = window.appState.settings.settingsPassword;
 }
 
 /**
