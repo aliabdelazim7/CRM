@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الباز للمبيعات والمخازن | نظام ERP متكامل</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="src/css/styles.css">
+  
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    // Custom tailwind configuration for a premium, harmonious design system
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#6366f1', // Sleek Indigo
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            },
+            slate: {
+              950: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f8fafc] text-slate-800">
+
+  <!-- Core Page Wrapper -->
+  <div class="min-h-screen flex">
+    
+    <!-- Sidebar Navigation (Floats to the right due to dir="rtl") -->
+    <aside class="w-64 bg-white border-l border-slate-200 hidden md:flex flex-col z-20 sticky top-0 h-screen no-print">
+      <!-- Logo Header -->
+      <div class="h-16 flex items-center px-6 border-b border-slate-100 space-x-reverse space-x-3">
+        <div class="bg-primary-600 text-white p-2 rounded-lg shadow-md shadow-primary-200">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-slate-900 tracking-tight font-display" id="nav-business-title">الباز للأجهزة الكهربائية</h1>
+          <span class="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Enterprise ERP</span>
+        </div>
+      </div>
+      
+      <!-- Nav Links (Translated to Arabic) -->
+      <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <a href="#dashboard" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-dashboard">
+          <i data-lucide="layout-dashboard" class="w-5 h-5 ml-3"></i>
+          <span>لوحة التحكم</span>
+        </a>
+        
+        <a href="#pos" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-pos">
+          <i data-lucide="shopping-cart" class="w-5 h-5 ml-3"></i>
+          <span>المبيعات والفواتير (POS)</span>
+        </a>
+        
+        <a href="#products" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-products">
+          <i data-lucide="package" class="w-5 h-5 ml-3"></i>
+          <span>المنتجات والمخزن</span>
+        </a>
+        
+        <a href="#customers" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-customers">
+          <i data-lucide="users" class="w-5 h-5 ml-3"></i>
+          <span>العملاء والحسابات (CRM)</span>
+        </a>
+        
+        <a href="#expenses" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-expenses">
+          <i data-lucide="wallet" class="w-5 h-5 ml-3"></i>
+          <span>دفتر المصروفات</span>
+        </a>
+        
+        <a href="#reports" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-reports">
+          <i data-lucide="bar-chart-3" class="w-5 h-5 ml-3"></i>
+          <span>التقارير والتحليلات</span>
+        </a>
+        
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="#settings" class="flex items-center px-4 py-3 rounded-lg text-sm transition-all sidebar-link-inactive" id="nav-settings">
+            <i data-lucide="settings" class="w-5 h-5 ml-3"></i>
+            <span>System Settings</span>
+          </a>
+          <button id="sidebar-logout-btn" class="w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all text-rose-600 hover:bg-rose-50/50 mt-1 border border-transparent">
+            <i data-lucide="log-out" class="w-5 h-5 ml-3"></i>
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer Sync Status -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+        <div class="flex items-center justify-between text-xs mb-2">
+          <span class="text-slate-400">حالة قاعدة البيانات:</span>
+          <span id="sync-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">وضع التجربة</span>
+        </div>
+        <button id="sidebar-sync-btn" class="w-full flex items-center justify-center space-x-reverse space-x-2 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="sync-icon"></i>
+          <span>مزامنة البيانات</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <main class="flex-1 flex flex-col min-w-0">
+      
+      <!-- Topbar Header -->
+      <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 sticky top-0 no-print">
+        <div class="flex items-center space-x-reverse space-x-4">
+          <!-- Mobile Menu Toggle -->
+          <button class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg" id="mobile-menu-btn">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+          
+          <div class="relative hidden sm:block">
+            <div class="flex items-center space-x-reverse space-x-2 bg-slate-100 px-3 py-2 rounded-lg w-64 md:w-80">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+              <input type="text" id="global-search-input" autocomplete="off" placeholder="ابحث عن فاتورة، باركود، أو عميل..." class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-700 placeholder-slate-400">
+            </div>
+            <!-- Dynamic Global Search Results -->
+            <div id="global-search-results" class="absolute top-11 right-0 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 hidden max-h-96 overflow-y-auto p-3 space-y-3 text-xs text-right" dir="rtl">
+              <!-- JS Populated -->
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-reverse space-x-4">
+          <!-- Business Header Label -->
+          <div class="text-left hidden lg:block">
+            <p class="text-xs font-bold text-slate-950 font-display" id="header-business-name">الباز للأجهزة الكهربائية</p>
+            <p class="text-[10px] font-semibold text-slate-400" id="header-currency-code">العملة: جنيه مصري</p>
+          </div>
+          <div class="w-px h-6 bg-slate-200 hidden lg:block"></div>
+          
+          <!-- System Notifications Indicator -->
+          <div class="relative">
+            <button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg relative" id="header-alert-btn">
+              <i data-lucide="bell" class="w-5 h-5"></i>
+              <span id="low-stock-alert-dot" class="absolute top-1 left-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full hidden"></span>
+            </button>
+            <!-- Dynamic Notifications Popover -->
+            <div id="notification-popover" class="absolute top-11 left-0 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 hidden p-3 space-y-3 text-xs text-right" dir="rtl">
+              <div class="font-bold text-slate-700 border-b border-slate-100 pb-1.5 mb-1.5 flex justify-between items-center">
+                <span>تنبيهات النظام</span>
+                <span id="notification-count-badge" class="px-1.5 py-0.5 rounded-full text-[9px] bg-rose-100 text-rose-700 font-bold hidden">0</span>
+              </div>
+              <div id="notification-list" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- JS Populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Screens -->
+      <div id="pages-container" class="flex-1 p-6 overflow-y-auto no-print">
+        
+        <!-- ==================== DASHBOARD PAGE ==================== -->
+        <section id="dashboard-page" class="space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900 heading-display">لوحة التحكم</h2>
+              <p class="text-sm text-slate-500">مؤشرات الأداء المالي والمخزون وحالة المتجر في الوقت الفعلي.</p>
+            </div>
+            <div class="flex items-center space-x-reverse space-x-2">
+              <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider" id="dashboard-date-label">اليوم: 4 يونيو 2026</span>
+            </div>
+          </div>
+          
+          <!-- Stats Summary Matrix Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Today Sales -->
+            <div class="glass-card p-6 rounded-2xl bg-white flex items-center space-x-reverse space-x-4">
+              <div class="bg-indigo-50 text-primary-600 p-3.5 rounded-xl">
+                <i data-lucide="circle-dollar-sign" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400 font-medium">مبيعات اليوم</p>
+                <h3 class="text-xl font-bold text-slate-900 font-display mt-0.5" id="stat-sales-today">0.00 جنيه</h3>
+              </div>
+            </div>
+
+            <!-- Month Sales -->
+            <div class="glass-card p-6 rounded-2xl bg-white flex items-center space-x-reverse space-x-4">
+              <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-xl">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400 font-medium">مبيعات الشهر</p>
+                <h3 class="text-xl font-bold text-slate-900 font-display mt-0.5" id="stat-sales-month">0.00 جنيه</h3>
+              </div>
+            </div>
+
+            <!-- Net Profit -->
+            <div class="glass-card p-6 rounded-2xl bg-white flex items-center space-x-reverse space-x-4">
+              <div class="bg-violet-50 text-violet-600 p-3.5 rounded-xl">
+                <i data-lucide="percent" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400 font-medium">صافي الأرباح (الشهر)</p>
+                <h3 class="text-xl font-bold text-slate-900 font-display mt-0.5" id="stat-net-profit">0.00 جنيه</h3>
+              </div>
+            </div>
+
+            <!-- Outstanding Balances -->
+            <div class="glass-card p-6 rounded-2xl bg-white flex items-center space-x-reverse space-x-4">
+              <div class="bg-rose-50 text-rose-600 p-3.5 rounded-xl">
+                <i data-lucide="hand-coins" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400 font-medium">الديون المستحقة</p>
+                <h3 class="text-xl font-bold text-slate-900 font-display mt-0.5 text-rose-600" id="stat-debts">0.00 جنيه</h3>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Stats Quick Row -->
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+              <p class="text-[10px] uppercase font-bold text-slate-400">إجمالي العملاء</p>
+              <h4 class="text-lg font-bold text-slate-800 font-display mt-1" id="stat-cust-count">0</h4>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+              <p class="text-[10px] uppercase font-bold text-slate-400">إجمالي المنتجات</p>
+              <h4 class="text-lg font-bold text-slate-800 font-display mt-1" id="stat-prod-count">0</h4>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+              <p class="text-[10px] uppercase font-bold text-slate-400">منتجات أوشكت على النفاد</p>
+              <h4 class="text-lg font-bold text-amber-600 font-display mt-1" id="stat-low-stock-count">0</h4>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+              <p class="text-[10px] uppercase font-bold text-slate-400">منتجات نفدت من المخزن</p>
+              <h4 class="text-lg font-bold text-rose-600 font-display mt-1" id="stat-out-stock-count">0</h4>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center col-span-2 lg:col-span-1">
+              <p class="text-[10px] uppercase font-bold text-slate-400">مصروفات الشهر</p>
+              <h4 class="text-lg font-bold text-slate-800 font-display mt-1" id="stat-expenses-month">0.00 جنيه</h4>
+            </div>
+          </div>
+
+          <!-- Graphical Analytics Section -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Sales Timeline Chart -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 lg:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-800 font-display">مخطط المبيعات اليومية</h3>
+                <span class="text-xs text-slate-400">آخر 7 أيام</span>
+              </div>
+              <div class="h-64 relative">
+                <canvas id="dailySalesChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Payment Methods Breakdown -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+              <h3 class="text-sm font-bold text-slate-800 font-display mb-4">طرق الدفع المستخدمة</h3>
+              <div class="h-48 relative flex justify-center">
+                <canvas id="paymentMethodsChart"></canvas>
+              </div>
+              <!-- Legend stats -->
+              <div class="mt-4 space-y-2" id="payment-methods-legend">
+                <!-- Javascript populated -->
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Top Selling Products -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+              <h3 class="text-sm font-bold text-slate-800 font-display mb-4">أفضل 5 منتجات مبيعاً</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse custom-table">
+                  <thead>
+                    <tr class="border-b border-slate-100">
+                      <th class="py-2.5 pr-4">اسم المنتج</th>
+                      <th class="py-2.5 text-left pl-4">الوحدات المباعة</th>
+                      <th class="py-2.5 text-left pl-4">إجمالي الإيراد</th>
+                    </tr>
+                  </thead>
+                  <tbody id="top-selling-table-body">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Out of Stock / Alerts Ledger -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6">
+              <h3 class="text-sm font-bold text-rose-600 font-display mb-4">تنبيهات المخزون الحرجة</h3>
+              <div class="overflow-y-auto max-h-64">
+                <ul class="divide-y divide-slate-100" id="critical-stock-alerts-list">
+                  <!-- Loaded dynamically -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== POS / INVOICING PAGE ==================== -->
+        <section id="pos-page" class="space-y-6 hidden">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900 heading-display">المبيعات ونقطة البيع (POS)</h2>
+            <p class="text-sm text-slate-500">إنشاء فواتير للعملاء، مسح باركود المنتجات، وتسجيل عمليات الدفع الآجل والنقدي.</p>
+          </div>
+
+          <div class="pos-layout">
+            <!-- Left Panel: Product Catalog / Selection -->
+            <div class="space-y-4">
+              <!-- Catalog Filters & Search -->
+              <div class="bg-white p-4 border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center gap-3">
+                <div class="flex-1 flex items-center space-x-reverse space-x-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                  <input type="text" id="pos-product-search" placeholder="ابحث باسم المنتج، كود، أو امسح الباركود..." class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-700 placeholder-slate-400">
+                </div>
+                
+                <select id="pos-category-filter" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white focus:outline-none text-slate-700">
+                  <option value="All">جميع الأقسام</option>
+                  <!-- JS populated -->
+                </select>
+
+                <div class="flex items-center space-x-reverse space-x-2">
+                  <button id="pos-barcode-mode-btn" class="flex items-center justify-center space-x-reverse space-x-1 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all">
+                    <i data-lucide="scan-line" class="w-3.5 h-3.5 text-indigo-500"></i>
+                    <span>وضع القارئ: معطل</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Product Grid View -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto max-h-[500px] pl-1" id="pos-catalog-grid">
+                <!-- Javascript populated -->
+              </div>
+            </div>
+
+            <!-- Right Panel: Cart & Check-out -->
+            <div class="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm h-[600px]">
+              <!-- Cart Header -->
+              <div class="p-4 border-b border-slate-200">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-reverse space-x-2">
+                    <i data-lucide="shopping-basket" class="w-5 h-5 text-indigo-500"></i>
+                    <h3 class="font-bold text-sm text-slate-800 font-display">سلة المبيعات الحالية</h3>
+                  </div>
+                  <button id="pos-clear-cart-btn" class="text-xs text-slate-400 hover:text-rose-500 font-semibold flex items-center">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5 ml-1"></i> تفريغ السلة
+                  </button>
+                </div>
+                
+                <!-- Customer Assignment -->
+                <div class="mt-3">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">العميل المستهدف</label>
+                  <div class="flex items-center space-x-reverse space-x-2">
+                    <select id="pos-customer-select" class="flex-1 border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white focus:outline-none text-slate-700">
+                      <option value="GENERIC">عميل نقدي (عام)</option>
+                      <!-- Dynamic Customers -->
+                    </select>
+                    <button id="pos-add-customer-quick-btn" class="p-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50" title="تسجيل عميل سريع">
+                      <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cart Item List -->
+              <div class="flex-1 overflow-y-auto p-4 space-y-3" id="pos-cart-items-container">
+                <!-- Emtpy State -->
+                <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
+                  <i data-lucide="shopping-bag" class="w-8 h-8 text-slate-300"></i>
+                  <p class="text-xs">السلة فارغة حالياً.</p>
+                  <p class="text-[10px]">أضف بنوداً من القائمة الجانبية لبدء الفاتورة</p>
+                </div>
+              </div>
+
+              <!-- Cart Summary & Payment -->
+              <div class="p-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl space-y-4">
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between text-xs text-slate-500">
+                    <span>عدد البنود:</span>
+                    <span id="pos-cart-count" class="font-semibold text-slate-800 font-mono">0</span>
+                  </div>
+                  <div class="flex items-center justify-between text-sm font-bold text-slate-900 border-t border-slate-200/60 pt-2">
+                    <span class="font-display">إجمالي الفاتورة:</span>
+                    <span id="pos-cart-total" class="font-display text-base text-indigo-600 font-mono">0.00 جنيه</span>
+                  </div>
+                </div>
+
+                <button id="pos-checkout-btn" disabled class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-100 disabled:bg-slate-300 disabled:shadow-none transition-all flex items-center justify-center space-x-reverse space-x-2">
+                  <i data-lucide="credit-card" class="w-4 h-4"></i>
+                  <span>إتمام الدفع وإصدار الفاتورة</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== PRODUCTS PAGE ==================== -->
+        <section id="products-page" class="space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900 heading-display">المنتجات والمخزن</h2>
+              <p class="text-sm text-slate-500">إدارة أسعار بيع وشراء المنتجات، حساب الربحية، الموردين، ومستويات المخزون الحالي.</p>
+            </div>
+            <button id="prod-add-new-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>إضافة منتج جديد</span>
+            </button>
+          </div>
+
+          <!-- Product Table Filters -->
+          <div class="bg-white p-4 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex items-center space-x-reverse space-x-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+              <input type="text" id="prod-search" placeholder="ابحث بالاسم، الكود، أو الباركود..." class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-700 placeholder-slate-400">
+            </div>
+
+            <select id="prod-filter-category" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white focus:outline-none text-slate-700">
+              <option value="All">جميع الأقسام</option>
+              <!-- JS populated -->
+            </select>
+
+            <select id="prod-filter-stock" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white focus:outline-none text-slate-700">
+              <option value="All">جميع مستويات المخزون</option>
+              <option value="Available">متوفر</option>
+              <option value="Low Stock">أوشك على النفاد</option>
+              <option value="Out Of Stock">نفد</option>
+            </select>
+
+            <button id="prod-export-csv-btn" class="flex items-center justify-center space-x-reverse space-x-2 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>تصدير ملف Excel (CSV)</span>
+            </button>
+          </div>
+
+          <!-- Products Listing Container -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="responsive-table-container">
+              <table class="w-full text-right border-collapse custom-table">
+                <thead>
+                  <tr class="border-b border-slate-100 bg-slate-50">
+                    <th class="py-3 px-6 text-right">كود المنتج</th>
+                    <th class="py-3 px-6 text-right">اسم المنتج</th>
+                    <th class="py-3 px-6 text-right">القسم</th>
+                    <th class="py-3 px-6 text-right">المورد</th>
+                    <th class="py-3 px-6 text-left pl-6">سعر الشراء</th>
+                    <th class="py-3 px-6 text-left pl-6">سعر البيع</th>
+                    <th class="py-3 px-6 text-left pl-6">الربح</th>
+                    <th class="py-3 px-6 text-center">المخزون</th>
+                    <th class="py-3 px-6 text-right">الحالة</th>
+                    <th class="py-3 px-6 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="products-table-body" class="divide-y divide-slate-100">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Pagination and Info -->
+            <div class="p-4 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <span class="text-slate-400" id="prod-pagination-info">عرض 0 من إجمالي 0 منتج</span>
+              <div class="flex items-center space-x-reverse space-x-2">
+                <button id="prod-prev-page-btn" disabled class="px-3 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all">السابق</button>
+                <button id="prod-next-page-btn" disabled class="px-3 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all">التالي</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== CUSTOMERS PAGE ==================== -->
+        <section id="customers-page" class="space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900 heading-display">العملاء والحسابات (CRM)</h2>
+              <p class="text-sm text-slate-500">تتبع مسحوبات العملاء وسجل فواتير المبيعات، ومراجعة كشوف الحسابات المديونة والتحصيل.</p>
+            </div>
+            <button id="cust-add-new-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>تسجيل عميل جديد</span>
+            </button>
+          </div>
+
+          <!-- Customer CRM filters -->
+          <div class="bg-white p-4 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="flex items-center space-x-reverse space-x-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg sm:col-span-2">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+              <input type="text" id="cust-search" placeholder="ابحث بالاسم، رقم الهاتف، أو العنوان..." class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-700 placeholder-slate-400">
+            </div>
+
+            <select id="cust-filter-debt" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white focus:outline-none text-slate-700">
+              <option value="All">جميع الحسابات</option>
+              <option value="With Debt">عملاء عليهم مديونيات</option>
+              <option value="No Debt">حسابات خالصة (رصيد صفر)</option>
+            </select>
+          </div>
+
+          <!-- Customers Table Grid -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="responsive-table-container">
+              <table class="w-full text-right border-collapse custom-table">
+                <thead>
+                  <tr class="border-b border-slate-100 bg-slate-50">
+                    <th class="py-3 px-6 text-right">كود العميل</th>
+                    <th class="py-3 px-6 text-right">اسم العميل</th>
+                    <th class="py-3 px-6 text-right">رقم الهاتف</th>
+                    <th class="py-3 px-6 text-right">العنوان</th>
+                    <th class="py-3 px-6 text-left pl-6">إجمالي مشترياته</th>
+                    <th class="py-3 px-6 text-left pl-6 text-rose-600">المديونية الحالية</th>
+                    <th class="py-3 px-6 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-table-body" class="divide-y divide-slate-100">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="p-4 border-t border-slate-100 text-xs text-slate-400" id="cust-table-info">
+              عرض 0 عميل مسجل
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== EXPENSES PAGE ==================== -->
+        <section id="expenses-page" class="space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900 heading-display">دفتر المصروفات التشغيلية</h2>
+              <p class="text-sm text-slate-500">تسجيل بنود المصروفات (إيجارات، رواتب، كهرباء، صيانة) لحساب صافي الأرباح العام بدقة.</p>
+            </div>
+            <button id="exp-add-new-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>تسجيل مصروف جديد</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left side: List of Expenses -->
+            <div class="lg:col-span-2 space-y-4">
+              <!-- Expense Filter Panel -->
+              <div class="bg-white p-4 border border-slate-200 rounded-xl flex gap-4 flex-wrap">
+                <input type="month" id="expense-month-filter" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+                <select id="expense-category-filter" class="border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-semibold">
+                  <option value="All">جميع بنود المصروفات</option>
+                  <option value="Rent">إيجار</option>
+                  <option value="Salaries">رواتب</option>
+                  <option value="Electricity">كهرباء</option>
+                  <option value="Internet">إنترنت</option>
+                  <option value="Marketing">تسويق</option>
+                  <option value="Transportation">نقل وانتقالات</option>
+                  <option value="Other">مصروفات أخرى</option>
+                </select>
+              </div>
+
+              <!-- Expenses Table -->
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="responsive-table-container">
+                  <table class="w-full text-right border-collapse custom-table">
+                    <thead>
+                      <tr class="border-b border-slate-100 bg-slate-50">
+                        <th class="py-3 px-6 text-right">التاريخ</th>
+                        <th class="py-3 px-6 text-right">كود المصروف</th>
+                        <th class="py-3 px-6 text-right">النوع / القسم</th>
+                        <th class="py-3 px-6 text-right">البيان / ملاحظات</th>
+                        <th class="py-3 px-6 text-left pl-6">القيمة</th>
+                      </tr>
+                    </thead>
+                    <tbody id="expenses-table-body" class="divide-y divide-slate-100">
+                      <!-- Populated by JS -->
+                    </tbody>
+                  </table>
+                </div>
+                <div class="p-4 border-t border-slate-100 text-xs text-slate-400" id="expense-table-info">
+                  عرض 0 عملية مصروف
+                </div>
+              </div>
+            </div>
+
+            <!-- Right side: Expense Summary Chart & Cards -->
+            <div class="space-y-6">
+              <div class="bg-white border border-slate-200 rounded-2xl p-6">
+                <h3 class="text-sm font-bold text-slate-800 font-display mb-4">المصروفات حسب الأقسام</h3>
+                <div id="expense-donut-container" class="h-44 relative flex justify-center items-center">
+                  <!-- Renders Category sum labels -->
+                  <div class="text-slate-400 text-xs">لا توجد مصروفات مسجلة لهذا الشهر</div>
+                </div>
+                <div class="mt-4 border-t border-slate-100 pt-4 space-y-2" id="expense-breakdown-labels">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== REPORTS PAGE ==================== -->
+        <section id="reports-page" class="space-y-6 hidden">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900 heading-display">التقارير المالية والتحليلات</h2>
+            <p class="text-sm text-slate-500">إجراء عمليات التدقيق والمراجعة، تقييم الإيرادات والأرباح والخسائر، وتصدير البيانات.</p>
+          </div>
+
+          <!-- Reports Controls -->
+          <div class="bg-white p-6 border border-slate-200 rounded-2xl shadow-sm space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">نوع التقرير</label>
+                <select id="report-type-select" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold">
+                  <option value="sales">تقرير المبيعات والفواتير</option>
+                  <option value="inventory">تقرير قيمة المخزون الحالية</option>
+                  <option value="debts">تقرير حسابات المديونية الآجلة للعملاء</option>
+                  <option value="expenses">تقرير بنود دفتر المصروفات</option>
+                  <option value="profit">بيان الأرباح والخسائر الإجمالي (P&L)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">تحديد فترة جاهزة</label>
+                <select id="report-preset-select" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+                  <option value="today">اليوم</option>
+                  <option value="seven_days">آخر 7 أيام</option>
+                  <option value="this_month" selected>الشهر الحالي</option>
+                  <option value="last_month">الشهر الماضي</option>
+                  <option value="custom">فترة زمنية مخصصة</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">تاريخ البداية</label>
+                <input type="date" id="report-start-date" disabled class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">تاريخ النهاية</label>
+                <input type="date" id="report-end-date" disabled class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-slate-100 pt-4 flex-wrap gap-2">
+              <p class="text-xs text-slate-400">انقر على عرض التقرير لتجميع البيانات من قاعدة البيانات وتحديثها.</p>
+              <div class="flex items-center space-x-reverse space-x-2">
+                <button id="report-download-btn" class="flex items-center justify-center space-x-reverse space-x-2 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>تصدير التقرير الحالي (CSV)</span>
+                </button>
+                <button id="report-generate-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
+                  <span>عرض التقرير</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Render Destination -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6" id="report-display-container">
+            <!-- Emtpy placeholder initially -->
+            <div class="h-64 flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
+              <i data-lucide="file-text" class="w-10 h-10 text-slate-300"></i>
+              <p class="text-sm font-semibold">لم يتم إصدار تقرير بعد.</p>
+              <p class="text-xs">اختر نوع التقرير والفترة الزمنية من الأعلى ثم انقر على زر "عرض التقرير".</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== SETTINGS PAGE (Kept in English & LTR layout) ==================== -->
+        <section id="settings-page" class="space-y-6 hidden" dir="ltr" class="text-left">
+          <div class="text-left">
+            <h2 class="text-2xl font-bold text-slate-900 heading-display">System Settings</h2>
+            <p class="text-sm text-slate-500">Configure business information, currency markers, and connect Google Sheets database.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <!-- General Settings -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 md:col-span-2 space-y-6">
+              <h3 class="text-sm font-bold text-slate-800 font-display border-b border-slate-100 pb-3">Business Information</h3>
+              
+              <form id="settings-form" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Business Name</label>
+                    <input type="text" id="settings-business-name" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none" required>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Currency Code</label>
+                    <input type="text" id="settings-currency" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="e.g. EGP, USD" required>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Store Address</label>
+                    <input type="text" id="settings-address" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Support Phone</label>
+                    <input type="text" id="settings-phone" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">System Login Email</label>
+                    <input type="email" id="settings-admin-email" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none" required>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">System Login Password</label>
+                    <input type="password" id="settings-admin-password" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none" required>
+                  </div>
+                </div>
+
+                <h3 class="text-sm font-bold text-slate-800 font-display border-b border-slate-100 pt-4 pb-3">Google Sheets Integration</h3>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Apps Script Web App API URL</label>
+                  <input type="url" id="settings-api-url" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="https://script.google.com/macros/s/.../exec">
+                  <p class="text-[10px] text-slate-400 mt-1">Leave empty to run in offline Mock Mode using local storage.</p>
+                </div>
+
+                <div class="pt-4 flex justify-end">
+                  <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 px-6 rounded-lg transition-all">
+                    Save Config & Connect
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Settings Help Tips -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+              <h3 class="text-sm font-bold text-slate-800 font-display border-b border-slate-100 pb-3">Setup Guide</h3>
+              
+              <div class="space-y-3 text-xs text-slate-500 leading-relaxed">
+                <p class="font-bold text-slate-700">Connect Google Sheets in 3 steps:</p>
+                <ol class="list-decimal pl-4 space-y-2">
+                  <li>Open a Google Sheet, and select <strong>Extensions &gt; Apps Script</strong>.</li>
+                  <li>Clear existing script, copy code from <code>google-apps-script/code.js</code>, and paste it.</li>
+                  <li>Click <strong>Deploy &gt; New Deployment</strong>. Choose <strong>Web App</strong>, change Access to <strong>Anyone</strong>, and deploy. Copy the Web App URL and paste it left.</li>
+                </ol>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-indigo-700 mt-4 text-[11px]">
+                  <strong>Note:</strong> When you connect the API URL, the system will download sheet data and run. You can toggle off the URL at any time to run independently.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== UI DIALOG MODALS & OVERLAYS ==================== -->
+
+  <!-- Loader Overlay Spinner -->
+  <div id="loader-overlay" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center space-y-3">
+      <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-xs font-semibold text-slate-700" id="loader-text">جاري المعالجة...</p>
+    </div>
+  </div>
+
+  <!-- Toast Notification Center -->
+  <div id="toast-container" class="fixed bottom-6 left-6 z-50 space-y-3 max-w-sm pointer-events-none" dir="rtl">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Modal: Create / Edit Product -->
+  <div id="product-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl relative m-4">
+      <button id="product-modal-close" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-900 font-display mb-4" id="product-modal-title">إضافة منتج جديد</h3>
+      
+      <form id="product-form" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">كود المنتج</label>
+            <input type="text" id="prod-form-id" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-slate-100 text-slate-500 focus:outline-none" readonly>
+            <span class="text-[9px] text-slate-400">يتم إنشاؤه تلقائياً</span>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">الباركود (اختياري)</label>
+            <input type="text" id="prod-form-barcode" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-mono" placeholder="امسح الباركود أو اكتب الكود">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">اسم المنتج</label>
+          <input type="text" id="prod-form-name" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold" placeholder="مثال: لفة سلك السويدي 2مم" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">القسم</label>
+            <input type="text" id="prod-form-category" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="مثال: أسلاك وكابلات" required list="categories-datalist">
+            <datalist id="categories-datalist"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">المورد</label>
+            <input type="text" id="prod-form-supplier" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="مثال: شركة السويدي">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 font-mono">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">سعر الشراء (التكلفة)</label>
+            <input type="number" step="0.01" id="prod-form-cost" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" required min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">سعر البيع</label>
+            <input type="number" step="0.01" id="prod-form-sell" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold" required min="0">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 font-mono">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">الكمية الحالية</label>
+            <input type="number" id="prod-form-qty" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" required min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">حد التنبيه للنفاد</label>
+            <input type="number" id="prod-form-min" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" required min="0">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">الوصف</label>
+          <textarea id="prod-form-desc" rows="2" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="اكتب تفاصيل مواصفات المنتج الفنية هنا..."></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-reverse space-x-2">
+          <button type="button" id="prod-form-cancel" class="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50">إلغاء</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">حفظ المنتج</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create / Edit Customer -->
+  <div id="customer-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative m-4">
+      <button id="customer-modal-close" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-900 font-display mb-4" id="customer-modal-title">تسجيل حساب عميل</h3>
+
+      <form id="customer-form" class="space-y-4">
+        <input type="hidden" id="cust-form-id">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">اسم العميل</label>
+          <input type="text" id="cust-form-name" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold" placeholder="الاسم ثلاثي" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">رقم الهاتف</label>
+          <input type="tel" id="cust-form-phone" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-mono" placeholder="رقم الموبايل" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">العنوان</label>
+          <input type="text" id="cust-form-address" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="موقع العمل أو عنوان الورشة/المنزل">
+        </div>
+
+        <!-- Toggle initial invoice checkbox -->
+        <div class="border-t border-slate-100 pt-4">
+          <div class="flex items-center space-x-reverse space-x-2">
+            <input type="checkbox" id="cust-form-has-invoice" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+            <label for="cust-form-has-invoice" class="text-xs font-semibold text-slate-700">تسجيل عملية شراء للعميل الآن؟ (اختياري)</label>
+          </div>
+        </div>
+
+        <!-- Inline purchase cart section -->
+        <div id="cust-modal-invoice-section" class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 hidden">
+          <h4 class="text-xs font-bold text-slate-800 font-display text-right">تسجيل مبيعات الفاتورة الأولية</h4>
+          
+          <!-- Item selection -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">اختر منتج من المخزن</label>
+              <select id="cust-invoice-product-select" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none">
+                <option value="">-- اختر المنتج --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">الكمية</label>
+              <div class="flex space-x-reverse space-x-1">
+                <input type="number" id="cust-invoice-qty" value="1" min="1" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none text-center font-mono">
+                <button type="button" id="cust-invoice-add-item-btn" class="px-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items list table -->
+          <div class="border border-slate-200 rounded-lg bg-white overflow-hidden max-h-36 overflow-y-auto">
+            <table class="w-full text-right border-collapse text-[10px]" dir="rtl">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="py-1.5 px-2 text-right">المنتج</th>
+                  <th class="py-1.5 px-2 text-center">الكمية</th>
+                  <th class="py-1.5 px-2 text-left pl-2">الإجمالي</th>
+                  <th class="py-1.5 px-2 text-center">حذف</th>
+                </tr>
+              </thead>
+              <tbody id="cust-invoice-cart-body" class="divide-y divide-slate-100 font-mono">
+                <tr>
+                  <td colspan="4" class="py-3 text-center text-slate-400">لا توجد بنود مضافة بعد.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Financial Details -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">إجمالي الفاتورة</label>
+              <input type="text" id="cust-invoice-total" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-slate-100 text-slate-800 focus:outline-none font-bold text-left pl-2 font-mono" readonly value="0.00">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">المبلغ المدفوع</label>
+              <input type="number" step="0.01" id="cust-invoice-paid" value="0" min="0" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none font-bold font-mono text-left pl-2">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">تاريخ الفاتورة</label>
+              <input type="date" id="cust-invoice-date" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none font-mono">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 text-right">طريقة الدفع</label>
+              <select id="cust-invoice-method" class="w-full border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none font-semibold">
+                <option value="Cash">كاش</option>
+                <option value="Vodafone Cash">فودافون كاش</option>
+                <option value="InstaPay">إنستاباي</option>
+                <option value="Bank Transfer">تحويل بنكي</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-reverse space-x-2">
+          <button type="button" id="cust-form-cancel" class="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50">إلغاء</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">حفظ الحساب</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Record Expense -->
+  <div id="expense-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative m-4">
+      <button id="expense-modal-close" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-900 font-display mb-4">تسجيل مصروف تشغيلي</h3>
+
+      <form id="expense-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
+          <input type="date" id="exp-form-date" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">التصنيف / البند</label>
+          <select id="exp-form-category" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-semibold" required>
+            <option value="Rent">إيجار</option>
+            <option value="Salaries">رواتب</option>
+            <option value="Electricity">كهرباء</option>
+            <option value="Internet">إنترنت</option>
+            <option value="Marketing">تسويق</option>
+            <option value="Transportation">نقل وانتقالات</option>
+            <option value="Other">أخرى / متنوعة</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">القيمة المالية</label>
+          <input type="number" step="0.01" id="exp-form-amount" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-mono font-bold" required min="0.01">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">البيان / ملاحظات</label>
+          <textarea id="exp-form-notes" rows="2" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="اكتب تفاصيل بند المصروف هنا..." required></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-reverse space-x-2">
+          <button type="button" id="exp-form-cancel" class="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50">إلغاء</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">تسجيل المصروف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: POS Payment Sheet -->
+  <div id="payment-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative m-4">
+      <button id="payment-modal-close" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-900 font-display mb-4">إتمام عملية الدفع للفاتورة</h3>
+
+      <div class="space-y-4">
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+          <span class="text-xs text-slate-500 font-semibold">إجمالي قيمة الفاتورة:</span>
+          <span id="pay-modal-total-label" class="text-lg font-bold text-slate-950 font-display font-mono">0.00 جنيه</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">العميل المستهدف للفاتورة</label>
+          <div class="flex items-center space-x-reverse space-x-2">
+            <select id="pay-modal-customer-select" class="flex-1 border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold">
+              <option value="GENERIC">عميل نقدي (عام)</option>
+            </select>
+            <button type="button" id="pay-modal-add-customer-quick-btn" class="p-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50" title="تسجيل عميل سريع">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick customer creation fields (hidden initially) -->
+        <div id="pay-modal-quick-customer-form" class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 space-y-2 hidden">
+          <h4 class="text-[10px] font-bold text-indigo-700 uppercase text-right">تسجيل عميل سريع</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="pay-modal-cust-name" placeholder="اسم العميل الجديد" class="border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none text-right">
+            <input type="tel" id="pay-modal-cust-phone" placeholder="رقم الهاتف" class="border border-slate-200 rounded-lg py-1.5 px-2 text-xs bg-white text-slate-700 focus:outline-none font-mono text-right">
+          </div>
+          <div class="flex justify-end space-x-reverse space-x-2 text-[10px]">
+            <button type="button" id="pay-modal-cust-cancel" class="text-slate-500 hover:text-slate-700">إلغاء</button>
+            <button type="button" id="pay-modal-cust-save" class="text-indigo-600 hover:text-indigo-800 font-bold">حفظ العميل</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">تاريخ الفاتورة</label>
+            <input type="date" id="pay-modal-date" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">طريقة الدفع</label>
+            <select id="pay-modal-method" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold">
+              <option value="Cash">نقدي (كاش)</option>
+              <option value="Vodafone Cash">فودافون كاش</option>
+              <option value="InstaPay">إنستاباي (InstaPay)</option>
+              <option value="Bank Transfer">تحويل بنكي</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 font-mono">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">المبلغ المدفوع</label>
+            <input type="number" step="0.01" id="pay-modal-paid" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold text-slate-950" required min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">المديونية المتبقية (آجل)</label>
+            <input type="number" id="pay-modal-remaining" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-slate-100 text-rose-500 font-bold focus:outline-none" readonly>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">ملاحظات الفاتورة (اختياري)</label>
+          <textarea id="pay-modal-notes" rows="2" class="w-full border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none" placeholder="اكتب أي ملاحظات للدفعة أو الفاتورة..."></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-reverse space-x-2">
+          <button type="button" id="pay-modal-cancel" class="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50">إلغاء</button>
+          <button type="button" id="pay-modal-submit-save-only" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">حفظ فقط (بدون طباعة)</button>
+          <button type="button" id="pay-modal-submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-100">حفظ وطباعة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal/Drawer: Customer Statement & Detailed Profiling -->
+  <div id="customer-profile-drawer" class="fixed inset-y-0 left-0 w-full max-w-xl bg-white shadow-2xl border-r border-slate-200 z-40 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col no-print">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-slate-900 font-display" id="cust-drawer-name">أحمد حسن</h3>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono" id="cust-drawer-id">CUST-101</p>
+      </div>
+      <button id="cust-drawer-close" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Body scrolling area -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <!-- Contact Info Card -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-xs grid grid-cols-2 gap-4">
+        <div>
+          <span class="text-slate-400 font-semibold block mb-0.5">رقم الهاتف:</span>
+          <span class="font-bold text-slate-700 font-mono" id="cust-drawer-phone">01001234567</span>
+        </div>
+        <div>
+          <span class="text-slate-400 font-semibold block mb-0.5">العنوان:</span>
+          <span class="font-bold text-slate-700" id="cust-drawer-address">مصر الجديدة، القاهرة</span>
+        </div>
+      </div>
+
+      <!-- Financial Status Summary Cards -->
+      <div class="grid grid-cols-2 gap-4 text-center">
+        <div class="border border-slate-100 bg-emerald-50/20 rounded-xl p-4">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">إجمالي المسحوبات</p>
+          <p class="text-base font-bold text-slate-800 font-display mt-0.5 font-mono" id="cust-drawer-total">0.00 جنيه</p>
+        </div>
+        <div class="border border-rose-100 bg-rose-50/20 rounded-xl p-4">
+          <p class="text-[10px] font-bold text-rose-500 uppercase">المديونية المستحقة حالياً</p>
+          <p class="text-base font-bold text-rose-600 font-display mt-0.5 font-mono" id="cust-drawer-balance">0.00 جنيه</p>
+        </div>
+      </div>
+
+      <!-- Debt payment action panel -->
+      <div id="cust-drawer-payment-panel" class="bg-rose-50/30 border border-rose-100/50 rounded-xl p-4 space-y-3 hidden">
+        <h4 class="text-xs font-bold text-rose-800 font-display">تحصيل مديونية / تسجيل دفعة عميل</h4>
+        <div class="flex items-center space-x-reverse space-x-2">
+          <input type="number" step="0.01" id="cust-payment-amount" placeholder="المبلغ (جنيه)" class="flex-1 border border-rose-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none focus:border-rose-400 font-mono font-bold">
+          <button id="cust-payment-submit" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-1.5 px-4 rounded-lg shadow-sm">
+            تسجيل التحصيل
+          </button>
+        </div>
+      </div>
+
+      <!-- Purchase Invoices List -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-slate-700 font-display">سجل الفواتير والمبيعات</h4>
+        <div id="cust-drawer-invoices-container" class="space-y-4">
+          <!-- JS Populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Invoice Section Overlay (Hidden for viewing, shown on screen-print only) -->
+  <div id="print-section" class="bg-white p-8 max-w-2xl mx-auto hidden border border-slate-200 rounded-xl shadow-lg relative my-8" dir="rtl">
+    <!-- Close button for visual verification mode -->
+    <button onclick="document.getElementById('print-section').classList.add('hidden')" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 no-print flex items-center space-x-reverse space-x-1 border border-slate-200 rounded-lg px-2.5 py-1 text-xs">
+      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      <span>إغلاق المعاينة</span>
+    </button>
+    
+    <div class="flex justify-between items-start border-b border-slate-200 pb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900 font-display" id="print-biz-name">الباز للأجهزة الكهربائية</h2>
+        <p class="text-xs text-slate-500 mt-1" id="print-biz-address">القاهرة، مصر</p>
+        <p class="text-xs text-slate-500" id="print-biz-phone">الهاتف: +20 123 456 7890</p>
+      </div>
+      <div class="text-left font-mono">
+        <h3 class="text-lg font-bold text-indigo-600 font-display">فاتورة مبيعات</h3>
+        <p class="text-xs font-bold text-slate-800 mt-1" id="print-inv-number">INV-10001</p>
+        <p class="text-xs text-slate-400" id="print-inv-date">التاريخ: 2026-06-04</p>
+      </div>
+    </div>
+
+    <!-- Client / Bill To -->
+    <div class="my-6 text-xs grid grid-cols-2 gap-4">
+      <div>
+        <span class="text-slate-400 block font-semibold">فاتورة إلى:</span>
+        <span class="font-bold text-slate-800 block text-sm mt-0.5" id="print-cust-name">أحمد حسن</span>
+        <span class="text-slate-500 block" id="print-cust-phone">هاتف: 01001234567</span>
+      </div>
+      <div class="text-left">
+        <span class="text-slate-400 block font-semibold text-right">تفاصيل الدفع:</span>
+        <span class="font-bold text-slate-800 block mt-0.5" id="print-payment-method">طريقة الدفع: InstaPay</span>
+        <span id="print-payment-status" class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold">غير مدفوع</span>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="w-full text-right border-collapse text-xs my-6">
+      <thead>
+        <tr class="border-b border-slate-300 bg-slate-50">
+          <th class="py-2 px-3 font-semibold text-slate-700">البند / المنتج</th>
+          <th class="py-2 px-3 font-semibold text-slate-700 text-left pl-3">السعر</th>
+          <th class="py-2 px-3 font-semibold text-slate-700 text-center">الكمية</th>
+          <th class="py-2 px-3 font-semibold text-slate-700 text-left pl-3">الإجمالي</th>
+        </tr>
+      </thead>
+      <tbody id="print-items-body" class="divide-y divide-slate-100 font-mono">
+        <!-- Javascript populated -->
+      </tbody>
+    </table>
+
+    <!-- Total Calculations -->
+    <div class="border-t border-slate-200 pt-4 flex justify-end font-mono">
+      <div class="w-64 space-y-1.5 text-xs">
+        <div class="flex justify-between text-slate-500">
+          <span>المجموع الفرعي:</span>
+          <span id="print-subtotal">0.00 جنيه</span>
+        </div>
+        <div class="flex justify-between font-semibold text-slate-700">
+          <span>المبلغ المدفوع:</span>
+          <span id="print-paid">0.00 جنيه</span>
+        </div>
+        <div class="flex justify-between font-bold text-slate-900 border-t border-slate-200/80 pt-2 text-sm">
+          <span>المتبقي المستحق:</span>
+          <span id="print-due">0.00 جنيه</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Footer -->
+    <div class="border-t border-slate-200 mt-8 pt-6 text-center text-[10px] text-slate-400">
+      <p>شكراً لتعاملكم معنا! لأي استفسارات يرجى الاتصال بإدارة المتجر.</p>
+      <p class="mt-1">برمجة وتطوير نظام الباز لإدارة المؤسسات</p>
+    </div>
+  </div>
+
+  <!-- Fullscreen Login Overlay -->
+  <div id="login-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center hidden" dir="rtl">
+    <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-100 relative m-4 flex flex-col items-center">
+      <!-- Brand Logo Header -->
+      <div class="bg-primary-600 text-white p-3.5 rounded-2xl shadow-lg shadow-primary-200 mb-4 animate-bounce">
+        <i data-lucide="shield-check" class="w-8 h-8"></i>
+      </div>
+      
+      <h2 class="text-xl font-bold text-slate-900 heading-display mb-1 text-center" id="login-business-title">الباز للأجهزة الكهربائية</h2>
+      <p class="text-xs text-slate-400 mb-6 text-center font-semibold tracking-wider">تسجيل الدخول الآمن للنظام</p>
+
+      <form id="login-form" class="space-y-4 w-full">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1 text-right">البريد الإلكتروني</label>
+          <div class="flex items-center space-x-reverse space-x-2 bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl focus-within:border-primary-500 transition-all">
+            <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
+            <input type="email" id="login-email" placeholder="name@example.com" class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-800 font-medium" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1 text-right">كلمة المرور</label>
+          <div class="flex items-center space-x-reverse space-x-2 bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl focus-within:border-primary-500 transition-all">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
+            <input type="password" id="login-password" placeholder="••••••••" class="bg-transparent border-none text-xs focus:outline-none w-full text-slate-800 font-mono" required>
+            <button type="button" id="login-password-toggle" class="text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" class="w-4 h-4" id="login-password-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs py-1">
+          <div class="flex items-center space-x-reverse space-x-2">
+            <input type="checkbox" id="login-remember" class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500" checked>
+            <label for="login-remember" class="font-semibold text-slate-600 cursor-pointer">تذكرني على هذا الجهاز</label>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-200 transition-all flex items-center justify-center space-x-reverse space-x-2 mt-4">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>دخول للنظام</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Include Core Javascript Libraries -->
+  <script src="src/js/api.js"></script>
+  <script src="src/js/dashboard.js"></script>
+  <script src="src/js/products.js"></script>
+  <script src="src/js/customers.js"></script>
+  <script src="src/js/invoices.js"></script>
+  <script src="src/js/expenses.js"></script>
+  <script src="src/js/reports.js"></script>
+  <script src="src/js/app.js"></script>
+  
+</body>
+</html>
