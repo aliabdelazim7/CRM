@@ -28,6 +28,9 @@ window.renderDashboard = function() {
   const monthlyInvoices = invoices.filter(inv => inv["Invoice Date"] && inv["Invoice Date"].startsWith(currentMonthPrefix));
   const salesThisMonth = monthlyInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Total Amount"]) || 0), 0);
 
+  // Discounts This Month
+  const discountsThisMonth = monthlyInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
+
   // Gross Profit & Net Profit for the Month
   const monthlyInvoiceNumbers = new Set(monthlyInvoices.map(inv => inv["Invoice Number"]));
   let grossProfitMonth = 0;
@@ -45,8 +48,8 @@ window.renderDashboard = function() {
     .filter(exp => exp["Date"] && exp["Date"].startsWith(currentMonthPrefix))
     .reduce((sum, exp) => sum + (parseFloat(exp["Amount"]) || 0), 0);
 
-  // Net Profit
-  const netProfitMonth = grossProfitMonth - expensesThisMonth;
+  // Net Profit (subtracting both expenses and discounts given to keep margins accurate)
+  const netProfitMonth = grossProfitMonth - expensesThisMonth - discountsThisMonth;
 
   // Outstanding Debts
   const outstandingDebts = invoices.reduce((sum, inv) => sum + (parseFloat(inv["Remaining Amount"]) || 0), 0);
@@ -81,6 +84,10 @@ window.renderDashboard = function() {
   }
 
   document.getElementById("stat-debts").textContent = formatCurrency(outstandingDebts);
+  const discountEl = document.getElementById("stat-discounts-month");
+  if (discountEl) {
+    discountEl.textContent = formatCurrency(discountsThisMonth);
+  }
   document.getElementById("stat-cust-count").textContent = activeCustomers.length;
   document.getElementById("stat-prod-count").textContent = activeProducts.length;
   document.getElementById("stat-low-stock-count").textContent = lowStockCount;

@@ -435,6 +435,9 @@ function handleAddPayment(paymentData) {
   let currentPaid = 0;
   let totalAmount = 0;
   let customerId = "";
+  let currentDiscount = 0;
+  
+  const invDiscountIndex = invoicesHeaders.indexOf("Discount");
   
   for (let i = 0; i < invoicesRows.length; i++) {
     if (invoicesRows[i][invNumIndex] === invoiceNumber) {
@@ -442,6 +445,9 @@ function handleAddPayment(paymentData) {
       currentPaid = parseFloat(invoicesRows[i][invPaidIndex]) || 0;
       totalAmount = parseFloat(invoicesRows[i][invTotalIndex]) || 0;
       customerId = invoicesRows[i][invCustIdIndex];
+      if (invDiscountIndex !== -1) {
+        currentDiscount = parseFloat(invoicesRows[i][invDiscountIndex]) || 0;
+      }
       break;
     }
   }
@@ -450,9 +456,15 @@ function handleAddPayment(paymentData) {
     throw new Error("Invoice not found: " + invoiceNumber);
   }
   
-  // Calculate new payment status
+  // Calculate new payment status and discount
   const newPaid = currentPaid + amountToPay;
-  let newRemaining = Math.max(0, totalAmount - newPaid);
+  let newDiscount = currentDiscount;
+  if (discountRemaining) {
+    const waivedAmount = Math.max(0, totalAmount - currentPaid - currentDiscount - amountToPay);
+    newDiscount = currentDiscount + waivedAmount;
+  }
+  
+  let newRemaining = Math.max(0, totalAmount - newPaid - newDiscount);
   if (discountRemaining) {
     newRemaining = 0;
   }
@@ -465,6 +477,9 @@ function handleAddPayment(paymentData) {
   invoiceSheet.getRange(foundInvoiceRowIndex, invPaidIndex + 1).setValue(newPaid);
   invoiceSheet.getRange(foundInvoiceRowIndex, invRemIndex + 1).setValue(newRemaining);
   invoiceSheet.getRange(foundInvoiceRowIndex, invStatusIndex + 1).setValue(newStatus);
+  if (invDiscountIndex !== -1) {
+    invoiceSheet.getRange(foundInvoiceRowIndex, invDiscountIndex + 1).setValue(newDiscount);
+  }
   
   // Update customer's outstanding balance
   if (customerId && customerId !== "GENERIC") {

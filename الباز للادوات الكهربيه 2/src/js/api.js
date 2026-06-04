@@ -423,9 +423,16 @@ class ApiService {
     const invoice = this.db.Invoices[invIndex];
     const total = parseFloat(invoice["Total Amount"]) || 0;
     const curPaid = parseFloat(invoice["Paid Amount"]) || 0;
+    const curDiscount = parseFloat(invoice["Discount"]) || 0;
     
     const newPaid = curPaid + amt;
-    let newRem = Math.max(0, total - newPaid);
+    let newDiscount = curDiscount;
+    if (isDiscount) {
+      const waivedAmount = Math.max(0, total - curPaid - curDiscount - amt);
+      newDiscount = curDiscount + waivedAmount;
+    }
+    
+    let newRem = Math.max(0, total - newPaid - newDiscount);
     if (isDiscount) {
       newRem = 0;
     }
@@ -435,6 +442,7 @@ class ApiService {
     }
 
     this.db.Invoices[invIndex]["Paid Amount"] = newPaid;
+    this.db.Invoices[invIndex]["Discount"] = newDiscount;
     this.db.Invoices[invIndex]["Remaining Amount"] = newRem;
     this.db.Invoices[invIndex]["Status"] = newStatus;
 

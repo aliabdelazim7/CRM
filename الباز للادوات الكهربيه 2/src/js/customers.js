@@ -424,6 +424,8 @@ function renderCustomerInvoiceList(customerId) {
 
   container.innerHTML = customerInvoices.map(i => {
     const rem = parseFloat(i["Remaining Amount"]) || 0;
+    const discount = parseFloat(i["Discount"]) || 0;
+    const paid = parseFloat(i["Paid Amount"]) || 0;
     const invNumber = i["Invoice Number"];
     
     let pillClass, statusAr;
@@ -509,6 +511,24 @@ function renderCustomerInvoiceList(customerId) {
 
         <!-- Notes if exists -->
         ${i["Notes"] ? `<p class="text-[10px] text-slate-400 text-right font-medium">ملاحظات: ${i["Notes"]}</p>` : ""}
+
+        <!-- Financial Summary -->
+        <div class="flex justify-between items-center text-[10px] text-slate-500 bg-slate-50/50 p-2 rounded-lg font-mono" dir="rtl">
+          <div>
+            <span>المدفوع:</span>
+            <span class="font-bold text-emerald-600">${formatCurrency(paid)}</span>
+          </div>
+          ${discount > 0 ? `
+          <div>
+            <span>الخصم:</span>
+            <span class="font-bold text-indigo-600">${formatCurrency(discount)}</span>
+          </div>
+          ` : ''}
+          <div>
+            <span>المتبقي:</span>
+            <span class="font-bold text-rose-600">${formatCurrency(rem)}</span>
+          </div>
+        </div>
 
         <!-- Payment Actions -->
         ${paymentPanelHtml}
