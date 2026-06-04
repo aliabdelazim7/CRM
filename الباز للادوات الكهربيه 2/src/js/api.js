@@ -99,6 +99,17 @@ class ApiService {
     this.db = this.loadLocalDb();
     this.isMockMode = !this.settings.webAppUrl;
     this.syncListeners = [];
+    this.isProcessingQueue = false;
+
+    // Periodically sync pending queue every 20 seconds
+    setInterval(() => {
+      this.processPendingQueue();
+    }, 20000);
+
+    // Initial check on load after 3 seconds
+    setTimeout(() => {
+      this.processPendingQueue();
+    }, 3000);
   }
 
   loadConfig() {
@@ -214,8 +225,11 @@ class ApiService {
         throw new Error(resJson.error || "Failed to load database from Sheet");
       }
     } catch (error) {
-      console.error("API Sync Failed:", error);
-      throw error;
+      console.error("API Sync Failed. Falling back to local cache:", error);
+      if (window.showToast) {
+        showToast("فشلت المزامنة السحابية. يتم تشغيل النظام الآن بالنسخة المحلية المؤقتة.", "warning");
+      }
+      return this.db;
     }
   }
 
@@ -250,8 +264,21 @@ class ApiService {
         throw new Error(resJson.error || "Action failed on server");
       }
     } catch (error) {
-      console.error(`API Action [${action}] failed:`, error);
-      throw error;
+      console.error(`API Action [${action}] failed. Storing in sync queue:`, error);
+      
+      // Execute locally first to keep UI responsive and updated
+      const mockResult = await this.executeMockAction(action, payload);
+      
+      // Push failed action to sync queue
+      const queue = this.getPendingQueue();
+      queue.push({ action, payload, id: Date.now() });
+      this.savePendingQueue(queue);
+      
+      if (window.showToast) {
+        showToast("عذراً، انقطع اتصال الإنترنت! تم حفظ المعاملة محلياً مؤقتاً وسوف تُرفع تلقائياً فور عودة الشبكة.", "warning");
+      }
+      
+      return mockResult;
     }
   }
 
@@ -455,6 +482,73 @@ class ApiService {
         this.db.Customers[cIndex]["Outstanding Balance"] = Math.max(0, curBal - debtCleared);
       }
     }
+  }
+
+  getPendingQueue() {
+    try {
+      const saved = localStorage.getItem("elbaz_pending_sync");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  savePendingQueue(queue) {
+    localStorage.setItem("elbaz_pending_sync", JSON.stringify(queue));
+  }
+
+  async processPendingQueue() {
+    if (this.isProcessingQueue) return;
+    if (this.isMockMode) return;
+
+    const queue = this.getPendingQueue();
+    if (queue.length === 0) return;
+
+    this.isProcessingQueue = true;
+    console.log(`API Queue: Found ${queue.length} pending actions. Starting background upload...`);
+
+    let successCount = 0;
+
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      try {
+        const response = await fetch(this.settings.webAppUrl, {
+          method: "POST",
+          mode: "cors",
+          body: JSON.stringify({ action: item.action, payload: item.payload })
+        });
+
+        if (!response.ok) {
+          throw new Error("HTTP error " + response.status);
+        }
+
+        const resJson = await response.json();
+        if (resJson.success) {
+          successCount++;
+          if (resJson.data) {
+            this.db = normalizeDbDates(resJson.data);
+            this.saveLocalDb();
+          }
+        } else {
+          console.warn(`API Queue: Action [${item.action}] rejected by sheet:`, resJson.error);
+          successCount++; // Skip rejected payload to avoid blocking queue
+        }
+      } catch (err) {
+        console.warn(`API Queue: Failed to sync action [${item.action}] due to connection:`, err);
+        break; // Retry later when network is stable
+      }
+    }
+
+    if (successCount > 0) {
+      const remaining = this.getPendingQueue().slice(successCount);
+      this.savePendingQueue(remaining);
+      this.notifySyncListeners();
+      if (window.showToast) {
+        showToast(`تم رفع ومزامنة عدد ${successCount} معاملات أوفلاين مع السحابة بنجاح!`, "success");
+      }
+    }
+
+    this.isProcessingQueue = false;
   }
 }
 
