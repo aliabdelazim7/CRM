@@ -63,7 +63,6 @@ window.renderProducts = function() {
     const matchesSearch = 
       (p["Product Name"] && String(p["Product Name"]).toLowerCase().includes(searchQuery)) ||
       (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(searchQuery)) ||
-      (p["Barcode"] && String(p["Barcode"]).toLowerCase().includes(searchQuery)) ||
       (p["Supplier"] && String(p["Supplier"]).toLowerCase().includes(searchQuery));
     
     const matchesCategory = categoryFilter === "All" || p["Category"] === categoryFilter;
@@ -156,7 +155,6 @@ window.renderProducts = function() {
         <td class="py-3 px-6 font-mono font-bold text-slate-600">${p["Product ID"]}</td>
         <td class="py-3 px-6 text-right">
           <div class="font-bold text-slate-900">${p["Product Name"]}</div>
-          ${p["Barcode"] ? `<span class="text-[9px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded font-mono">${p["Barcode"]}</span>` : ''}
         </td>
         <td class="py-3 px-6 text-slate-500 text-right">${p["Category"]}</td>
         <td class="py-3 px-6 text-slate-500 text-right">${p["Supplier"] || "-"}</td>

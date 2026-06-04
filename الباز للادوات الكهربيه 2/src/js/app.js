@@ -569,8 +569,7 @@ function renderGlobalSearchResults(query) {
   const products = (db.Products || []).filter(p => 
     (p["Status"] || "Active") !== "Archived" && (
       (p["Product Name"] && String(p["Product Name"]).toLowerCase().includes(q)) ||
-      (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(q)) ||
-      (p["Barcode"] && String(p["Barcode"]).toLowerCase().includes(q))
+      (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(q))
     )
   ).slice(0, 3);
 

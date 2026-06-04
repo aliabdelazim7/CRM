@@ -4,7 +4,6 @@
  */
 
 let posCart = [];
-let barcodeModeActive = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("pos-product-search")?.addEventListener("input", handlePOSSearch);
@@ -17,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("pay-modal-submit")?.addEventListener("click", () => finalizePOSOrder(true));
   document.getElementById("pay-modal-submit-save-only")?.addEventListener("click", () => finalizePOSOrder(false));
 
-  document.getElementById("pos-barcode-mode-btn")?.addEventListener("click", toggleBarcodeMode);
   document.getElementById("pos-hold-cart-btn")?.addEventListener("click", suspendActiveCart);
 
   document.getElementById("pay-modal-paid")?.addEventListener("input", recalculateCheckoutPaymentBalances);
@@ -91,7 +89,6 @@ function renderPOSCatalog() {
     const matchesSearch = 
       (p["Product Name"] && String(p["Product Name"]).toLowerCase().includes(query)) ||
       (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(query)) ||
-      (p["Barcode"] && String(p["Barcode"]).toLowerCase().includes(query)) ||
       (p["Supplier"] && String(p["Supplier"]).toLowerCase().includes(query));
 
     return isNotArchived && matchesCategory && matchesSearch;
@@ -140,7 +137,6 @@ function renderPOSCatalog() {
             ${statusLabel}
           </div>
           <h4 class="font-bold text-xs text-slate-900 mt-1 line-clamp-2 text-right">${p["Product Name"]}</h4>
-          ${p["Barcode"] ? `<p class="text-[9px] font-mono text-slate-400 mt-0.5 text-right">${p["Barcode"]}</p>` : ""}
         </div>
         <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
           <span class="text-xs font-bold text-slate-800 font-mono">${formatCurrency(p["Selling Price"])}</span>
@@ -158,58 +154,10 @@ function renderPOSCatalog() {
 }
 
 /**
- * Handle POS search changes (handles scanner triggers on exact match)
+ * Handle POS search changes
  */
 function handlePOSSearch(e) {
-  const query = e.target.value.trim();
-  if (!query) {
-    renderPOSCatalog();
-    return;
-  }
-
-  const products = window.appState.db.Products || [];
-  
-  const matchedProd = products.find(p => p["Barcode"] === query && (p["Status"] || "Active") === "Active");
-  if (matchedProd) {
-    const qty = parseFloat(matchedProd["Current Quantity"]) || 0;
-    if (qty > 0) {
-      addProductToCart(matchedProd["Product ID"]);
-      playBeep();
-      e.target.value = "";
-      renderPOSCatalog();
-      showToast(`تم مسح الباركود وإضافة: ${matchedProd["Product Name"]}`, "success");
-      return;
-    } else {
-      showToast(`المنتج الممسوح باركوده [${matchedProd["Product Name"]}] غير متوفر بالمخزن حالياً!`, "warning");
-      e.target.value = "";
-      return;
-    }
-  }
-
   renderPOSCatalog();
-}
-
-/**
- * Toggle Barcode Scanner listener UI
- */
-function toggleBarcodeMode() {
-  barcodeModeActive = !barcodeModeActive;
-  const btn = document.getElementById("pos-barcode-mode-btn");
-  const input = document.getElementById("pos-product-search");
-  
-  if (btn) {
-    if (barcodeModeActive) {
-      btn.innerHTML = `<i data-lucide="scan-line" class="w-3.5 h-3.5 text-white animate-pulse"></i> <span>وضع القارئ: نشط</span>`;
-      btn.className = "flex items-center justify-center space-x-reverse space-x-1 py-2 px-3 border border-indigo-600 rounded-lg text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-100 transition-all";
-      input.placeholder = "وجه قارئ الباركود على المنتج...";
-      input.focus();
-    } else {
-      btn.innerHTML = `<i data-lucide="scan-line" class="w-3.5 h-3.5 text-indigo-500"></i> <span>وضع القارئ: معطل</span>`;
-      btn.className = "flex items-center justify-center space-x-reverse space-x-1 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 transition-all";
-      input.placeholder = "ابحث باسم المنتج، كود، أو امسح الباركود...";
-    }
-  }
-  lucide.createIcons();
 }
 
 /**
@@ -685,32 +633,7 @@ window.printInvoiceFromHistory = function(invoiceNumber) {
 // Expose printInvoice globally for CRM invoice checkouts
 window.printInvoice = printInvoice;
 
-/**
- * Plays a short, high-pitched beep sound using Web Audio API
- */
-function playBeep() {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(800, ctx.currentTime); // 800 Hz pitch
-    
-    gain.gain.setValueAtTime(0.1, ctx.currentTime); // moderate volume
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); // fade out quickly over 100ms
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.1);
-  } catch (error) {
-    console.warn("Could not play audio beep:", error);
-  }
-}
+
 
 // Initialize suspended carts list in appState if not defined
 if (!window.appState.suspendedCarts) {
