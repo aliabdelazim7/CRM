@@ -43,7 +43,18 @@ window.renderPOS = function() {
 
   const products = window.appState.db.Products || [];
   const activeProds = products.filter(p => (p["Status"] || "Active") !== "Archived");
-  const categories = [...new Set(activeProds.map(p => p["Category"]).filter(Boolean))];
+  
+  const customCategories = (function() {
+    try {
+      const saved = localStorage.getItem("elbaz_custom_categories");
+      return saved ? JSON.parse(saved) : [];
+    } catch(e) { return []; }
+  })();
+  const categories = [...new Set([
+    ...activeProds.map(p => p["Category"]).filter(Boolean),
+    ...customCategories
+  ])];
+
   const catFilter = document.getElementById("pos-category-filter");
   if (catFilter) {
     const selected = catFilter.value;

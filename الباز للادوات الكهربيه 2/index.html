@@ -436,10 +436,16 @@
               <h2 class="text-2xl font-bold text-slate-900 heading-display">المنتجات والمخزن</h2>
               <p class="text-sm text-slate-500">إدارة أسعار بيع وشراء المنتجات، حساب الربحية، الموردين، ومستويات المخزون الحالي.</p>
             </div>
-            <button id="prod-add-new-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>إضافة منتج جديد</span>
-            </button>
+            <div class="flex space-x-reverse space-x-2">
+              <button id="prod-manage-categories-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl transition-all">
+                <i data-lucide="tags" class="w-4 h-4 text-slate-500"></i>
+                <span>إدارة الأقسام</span>
+              </button>
+              <button id="prod-add-new-btn" class="flex items-center justify-center space-x-reverse space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-100 transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>إضافة منتج جديد</span>
+              </button>
+            </div>
           </div>
 
           <!-- Product Table Filters -->
@@ -799,6 +805,40 @@
   <!-- Toast Notification Center -->
   <div id="toast-container" class="fixed bottom-6 left-6 z-50 space-y-3 max-w-sm pointer-events-none" dir="rtl">
     <!-- Populated by JS -->
+  </div>
+
+  <!-- Modal: Manage Categories -->
+  <div id="categories-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative m-4 text-right" dir="rtl">
+      <button id="categories-modal-close" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-slate-900 font-display mb-4 flex items-center space-x-reverse space-x-2">
+        <i data-lucide="tags" class="w-5 h-5 text-indigo-500"></i>
+        <span>إدارة أقسام المنتجات</span>
+      </h3>
+      
+      <!-- Add New Category Form -->
+      <div class="space-y-2 mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+        <label class="block text-xs font-bold text-slate-600">إضافة قسم جديد</label>
+        <div class="flex items-center space-x-reverse space-x-2">
+          <input type="text" id="categories-new-input" class="flex-1 border border-slate-200 rounded-lg py-1.5 px-3 text-xs bg-white text-slate-700 focus:outline-none font-bold" placeholder="مثال: أدوات وعدد">
+          <button id="categories-add-btn" class="py-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-all flex items-center space-x-reverse space-x-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>إضافة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Categories List -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">الأقسام الحالية</label>
+        <div id="categories-list-container" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          <!-- JS populated -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: Create / Edit Product -->

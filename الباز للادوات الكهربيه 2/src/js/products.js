@@ -43,6 +43,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("prod-export-csv-btn")?.addEventListener("click", exportProductsToCSV);
+
+  document.getElementById("prod-manage-categories-btn")?.addEventListener("click", () => {
+    document.getElementById("categories-modal")?.classList.remove("hidden");
+    document.getElementById("categories-modal")?.classList.add("flex");
+    renderCategoriesModalList();
+  });
+  document.getElementById("categories-modal-close")?.addEventListener("click", () => {
+    document.getElementById("categories-modal")?.classList.add("hidden");
+    document.getElementById("categories-modal")?.classList.remove("flex");
+  });
+  document.getElementById("categories-add-btn")?.addEventListener("click", handleAddCategorySubmit);
+  document.getElementById("categories-new-input")?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      handleAddCategorySubmit();
+    }
+  });
 });
 
 /**
@@ -188,12 +204,29 @@ window.renderProducts = function() {
   lucide.createIcons();
 };
 
+function getCustomCategories() {
+  try {
+    const saved = localStorage.getItem("elbaz_custom_categories");
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCustomCategories(categories) {
+  localStorage.setItem("elbaz_custom_categories", JSON.stringify(categories));
+}
+
 /**
  * Sync Unique Categories into Selection filtering and Form Autocompletion
  */
 function populateCategoryFilters(products) {
   const activeProds = products.filter(p => (p["Status"] || "Active") !== "Archived");
-  const categories = [...new Set(activeProds.map(p => p["Category"]).filter(Boolean))];
+  const customCategories = getCustomCategories();
+  const categories = [...new Set([
+    ...activeProds.map(p => p["Category"]).filter(Boolean),
+    ...customCategories
+  ])];
 
   const categoryFilter = document.getElementById("prod-filter-category");
   if (categoryFilter) {
@@ -378,3 +411,108 @@ function exportProductsToCSV() {
   link.click();
   document.body.removeChild(link);
 }
+
+/**
+ * Render list of categories inside Categories Manager modal
+ */
+function renderCategoriesModalList() {
+  const container = document.getElementById("categories-list-container");
+  if (!container) return;
+
+  const products = window.appState.db.Products || [];
+  const activeProds = products.filter(p => (p["Status"] || "Active") !== "Archived");
+  const customCategories = getCustomCategories();
+  
+  // Union of all categories
+  const categories = [...new Set([
+    ...activeProds.map(p => p["Category"]).filter(Boolean),
+    ...customCategories
+  ])].sort();
+
+  if (categories.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-xs text-slate-400">
+        لا توجد أقسام مسجلة حالياً.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = categories.map(cat => {
+    const count = activeProds.filter(p => p["Category"] === cat).length;
+    const deleteBtnHtml = count > 0 
+      ? `<span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded-full">نشط: ${count} منتج</span>`
+      : `<button onclick="deleteCategory('${cat}')" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-all" title="حذف القسم">
+           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+         </button>`;
+
+    return `
+      <div class="flex items-center justify-between bg-white border border-slate-200/80 p-2 rounded-lg text-xs hover:border-slate-300 transition-all">
+        <span class="font-bold text-slate-700">${cat}</span>
+        <div class="flex items-center space-x-reverse space-x-1.5">
+          ${deleteBtnHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+}
+
+/**
+ * Handle new category form addition
+ */
+function handleAddCategorySubmit() {
+  const input = document.getElementById("categories-new-input");
+  if (!input) return;
+
+  const newCat = input.value.trim();
+  if (!newCat) {
+    showToast("خطأ: برجاء إدخال اسم القسم أولاً!", "warning");
+    return;
+  }
+
+  const products = window.appState.db.Products || [];
+  const activeProds = products.filter(p => (p["Status"] || "Active") !== "Archived");
+  const customCategories = getCustomCategories();
+  
+  const categories = [...new Set([
+    ...activeProds.map(p => p["Category"]).filter(Boolean),
+    ...customCategories
+  ])];
+
+  if (categories.some(c => c.toLowerCase() === newCat.toLowerCase())) {
+    showToast("تنبيه: هذا القسم مسجل بالفعل في النظام!", "warning");
+    return;
+  }
+
+  customCategories.push(newCat);
+  saveCustomCategories(customCategories);
+  input.value = "";
+
+  renderCategoriesModalList();
+  populateCategoryFilters(products);
+  if (typeof window.renderPOS === "function") {
+    window.renderPOS();
+  }
+  showToast(`تم إضافة القسم [${newCat}] بنجاح`, "success");
+}
+
+/**
+ * Delete a custom category if it has no products
+ */
+window.deleteCategory = function(catName) {
+  const confirmDelete = confirm(`هل تريد بالتأكيد حذف القسم [${catName}]؟`);
+  if (!confirmDelete) return;
+
+  let customCategories = getCustomCategories();
+  customCategories = customCategories.filter(c => c !== catName);
+  saveCustomCategories(customCategories);
+
+  renderCategoriesModalList();
+  populateCategoryFilters(window.appState.db.Products);
+  if (typeof window.renderPOS === "function") {
+    window.renderPOS();
+  }
+  showToast(`تم حذف القسم [${catName}] بنجاح`, "info");
+};
