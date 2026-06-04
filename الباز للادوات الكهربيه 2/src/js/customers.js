@@ -78,9 +78,14 @@ window.renderCustomers = function() {
     return;
   }
 
+  const invoices = window.appState.db.Invoices || [];
+
   tbody.innerHTML = filtered.map(c => {
     const debtVal = parseFloat(c["Outstanding Balance"]) || 0;
     const debtClass = debtVal > 0 ? "text-rose-600 font-bold" : "text-slate-400 font-medium";
+
+    const custInvoices = invoices.filter(inv => inv["Customer ID"] === c["Customer ID"]);
+    const totalDiscounts = custInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
 
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
@@ -89,6 +94,7 @@ window.renderCustomers = function() {
         <td class="py-3 px-6 text-slate-600 font-mono text-right">${c["Phone Number"]}</td>
         <td class="py-3 px-6 text-slate-500 text-right">${c["Address"] || "-"}</td>
         <td class="py-3 px-6 text-left font-mono font-medium">${formatCurrency(c["Total Purchases"])}</td>
+        <td class="py-3 px-6 text-left font-mono text-indigo-600 font-medium">${formatCurrency(totalDiscounts)}</td>
         <td class="py-3 px-6 text-left font-mono ${debtClass}">${formatCurrency(debtVal)}</td>
         <td class="py-3 px-6 text-center">
           <div class="flex items-center justify-center space-x-reverse space-x-1">
