@@ -451,7 +451,7 @@ class ApiService {
       const cIndex = this.db.Customers.findIndex(c => c["Customer ID"] === custId);
       if (cIndex !== -1) {
         const curBal = parseFloat(this.db.Customers[cIndex]["Outstanding Balance"]) || 0;
-        const debtCleared = isDiscount ? (total - curPaid) : amt;
+        const debtCleared = isDiscount ? (total - curPaid - curDiscount) : amt;
         this.db.Customers[cIndex]["Outstanding Balance"] = Math.max(0, curBal - debtCleared);
       }
     }

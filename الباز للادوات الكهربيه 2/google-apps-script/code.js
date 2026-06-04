@@ -494,7 +494,7 @@ function handleAddPayment(paymentData) {
       if (customersRows[i][custIdIndex] === customerId) {
         const custFoundRowIndex = i + 2;
         const currentBalance = parseFloat(customersRows[i][custBalIndex]) || 0;
-        const debtCleared = discountRemaining ? (totalAmount - currentPaid) : amountToPay;
+        const debtCleared = discountRemaining ? (totalAmount - currentPaid - currentDiscount) : amountToPay;
         const newBalance = Math.max(0, currentBalance - debtCleared);
         customersSheet.getRange(custFoundRowIndex, custBalIndex + 1).setValue(newBalance);
         break;
