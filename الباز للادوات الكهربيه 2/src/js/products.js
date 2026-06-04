@@ -119,10 +119,22 @@ window.renderProducts = function() {
     return;
   }
 
+  const invoiceItems = window.appState.db.InvoiceItems || [];
+
   tbody.innerHTML = paginated.map(p => {
     const qty = parseFloat(p["Current Quantity"]) || 0;
     const minAlert = parseFloat(p["Minimum Quantity Alert"]) || 0;
     const profit = parseFloat(p["Profit Per Unit"]) || 0;
+
+    // Calculate total sold units and total profit dynamically
+    const prodItems = invoiceItems.filter(item => item["Product ID"] === p["Product ID"]);
+    const unitsSold = prodItems.reduce((sum, item) => sum + (parseFloat(item["Quantity"]) || 0), 0);
+    const totalProfitVal = prodItems.reduce((sum, item) => {
+      const sell = parseFloat(item["Selling Price"]) || 0;
+      const cost = parseFloat(item["Purchase Price"]) || 0;
+      const q = parseFloat(item["Quantity"]) || 0;
+      return sum + (sell - cost) * q;
+    }, 0);
     
     let stockBadgeClass, stockStatusText;
     if (qty === 0) {
@@ -151,6 +163,8 @@ window.renderProducts = function() {
         <td class="py-3 px-6 text-left font-mono font-medium">${formatCurrency(p["Purchase Price"])}</td>
         <td class="py-3 px-6 text-left font-mono font-bold text-slate-900">${formatCurrency(p["Selling Price"])}</td>
         <td class="py-3 px-6 text-left font-mono font-medium text-emerald-600">+${formatCurrency(profit)}</td>
+        <td class="py-3 px-6 text-center font-mono font-bold text-slate-800">${unitsSold} وحدات</td>
+        <td class="py-3 px-6 text-left font-mono font-bold text-indigo-600">${formatCurrency(totalProfitVal)}</td>
         <td class="py-3 px-6 text-center">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${stockBadgeClass}">
             ${stockStatusText}
