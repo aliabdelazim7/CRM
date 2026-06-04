@@ -137,15 +137,21 @@ function buildSalesReport(start, end) {
   const filtered = invoices.filter(inv => isDateInRange(inv["Invoice Date"], start, end));
   
   let totalAmount = 0;
+  let totalDiscounts = 0;
+  let totalNet = 0;
   let totalPaid = 0;
   let totalDue = 0;
 
   const rows = filtered.map(inv => {
     const total = parseFloat(inv["Total Amount"]) || 0;
+    const discount = parseFloat(inv["Discount"]) || 0;
+    const net = total - discount;
     const paid = parseFloat(inv["Paid Amount"]) || 0;
     const due = parseFloat(inv["Remaining Amount"]) || 0;
 
     totalAmount += total;
+    totalDiscounts += discount;
+    totalNet += net;
     totalPaid += paid;
     totalDue += due;
 
@@ -171,6 +177,8 @@ function buildSalesReport(start, end) {
           <span class="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold ${inv["Status"] === "Paid" ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">${statusAr}</span>
         </td>
         <td class="py-2.5 px-4 text-left font-mono">${formatCurrency(total)}</td>
+        <td class="py-2.5 px-4 text-left font-mono text-amber-600">${formatCurrency(discount)}</td>
+        <td class="py-2.5 px-4 text-left font-mono font-semibold">${formatCurrency(net)}</td>
         <td class="py-2.5 px-4 text-left font-mono">${formatCurrency(paid)}</td>
         <td class="py-2.5 px-4 text-left font-mono text-rose-600 font-bold">${formatCurrency(due)}</td>
       </tr>
@@ -192,18 +200,22 @@ function buildSalesReport(start, end) {
               <th class="py-2.5 px-4 text-right">العميل</th>
               <th class="py-2.5 px-4 text-right">طريقة الدفع</th>
               <th class="py-2.5 px-4 text-center">الحالة</th>
-              <th class="py-2.5 px-4 text-left pl-4">القيمة الإجمالية</th>
+              <th class="py-2.5 px-4 text-left pl-4">الإجمالي قبل الخصم</th>
+              <th class="py-2.5 px-4 text-left pl-4 text-amber-600">الخصم</th>
+              <th class="py-2.5 px-4 text-left pl-4 font-semibold">الصافي</th>
               <th class="py-2.5 px-4 text-left pl-4">المدفوع</th>
               <th class="py-2.5 px-4 text-left pl-4 text-rose-600">المتبقي (آجل)</th>
             </tr>
           </thead>
           <tbody>
-            ${rows || `<tr><td colspan="8" class="text-center py-6 text-slate-400 font-bold">لا توجد أي مبيعات مسجلة في هذا النطاق الزمني.</td></tr>`}
+            ${rows || `<tr><td colspan="10" class="text-center py-6 text-slate-400 font-bold">لا توجد أي مبيعات مسجلة في هذا النطاق الزمني.</td></tr>`}
           </tbody>
           <tfoot class="bg-slate-50 border-t border-slate-300 font-bold font-mono">
             <tr class="text-xs text-slate-900">
               <td colspan="5" class="py-3 px-4 text-right">الإجمالي العام:</td>
               <td class="py-3 px-4 text-left">${formatCurrency(totalAmount)}</td>
+              <td class="py-3 px-4 text-left text-amber-600">${formatCurrency(totalDiscounts)}</td>
+              <td class="py-3 px-4 text-left font-semibold">${formatCurrency(totalNet)}</td>
               <td class="py-3 px-4 text-left">${formatCurrency(totalPaid)}</td>
               <td class="py-3 px-4 text-left text-rose-600">${formatCurrency(totalDue)}</td>
             </tr>
@@ -429,6 +441,8 @@ function buildProfitReport(start, end) {
 
   const rangeInvoices = invoices.filter(i => isDateInRange(i["Invoice Date"], start, end));
   const totalRevenue = rangeInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Total Amount"]) || 0), 0);
+  const totalDiscounts = rangeInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
+  const netRevenue = totalRevenue - totalDiscounts;
 
   const rangeInvoiceIds = new Set(rangeInvoices.map(i => i["Invoice Number"]));
   let totalCogs = 0;
@@ -440,7 +454,7 @@ function buildProfitReport(start, end) {
     }
   });
 
-  const grossProfit = totalRevenue - totalCogs;
+  const grossProfit = netRevenue - totalCogs;
 
   const rangeExpenses = expenses.filter(e => isDateInRange(e["Date"], start, end));
   
@@ -478,8 +492,24 @@ function buildProfitReport(start, end) {
         <!-- Revenue / Sales -->
         <div class="border-b border-slate-100 pb-2">
           <div class="flex justify-between items-center text-slate-800 font-bold text-sm">
-            <span>إجمالي الإيرادات التشغيلية (المبيعات)</span>
+            <span>إجمالي الإيرادات التشغيلية (المبيعات الإجمالية)</span>
             <span class="font-mono text-emerald-600 font-bold text-sm">+${formatCurrency(totalRevenue)}</span>
+          </div>
+        </div>
+
+        <!-- Discounts -->
+        <div class="border-b border-slate-100 pb-2">
+          <div class="flex justify-between items-center text-slate-800 font-semibold">
+            <span>إجمالي الخصومات الممنوحة للعملاء</span>
+            <span class="font-mono text-rose-500 font-semibold">-${formatCurrency(totalDiscounts)}</span>
+          </div>
+        </div>
+
+        <!-- Net Revenue -->
+        <div class="border-b border-slate-100 pb-2">
+          <div class="flex justify-between items-center text-slate-900 font-bold">
+            <span>صافي المبيعات (Net Revenue)</span>
+            <span class="font-mono text-emerald-600 font-bold">${formatCurrency(netRevenue)}</span>
           </div>
         </div>
 
@@ -600,6 +630,8 @@ function exportProfitAndLossToCSV() {
 
   const rangeInvoices = invoices.filter(i => isDateInRange(i["Invoice Date"], start, end));
   const totalRevenue = rangeInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Total Amount"]) || 0), 0);
+  const totalDiscounts = rangeInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
+  const netRevenue = totalRevenue - totalDiscounts;
 
   const rangeInvoiceIds = new Set(rangeInvoices.map(i => i["Invoice Number"]));
   let totalCogs = 0;
@@ -611,7 +643,7 @@ function exportProfitAndLossToCSV() {
     }
   });
 
-  const grossProfit = totalRevenue - totalCogs;
+  const grossProfit = netRevenue - totalCogs;
 
   const rangeExpenses = expenses.filter(e => isDateInRange(e["Date"], start, end));
   const expensesByCategory = {};
@@ -640,7 +672,9 @@ function exportProfitAndLossToCSV() {
     `الفترة الزمنية:,من ${start} إلى ${end},`,
     `,,`,
     `البند,القيمة المالية (جنيه),النسبة`,
-    `إجمالي الإيرادات التشغيلية (المبيعات),${totalRevenue},`,
+    `إجمالي الإيرادات التشغيلية (المبيعات الإجمالية),${totalRevenue},`,
+    `إجمالي الخصومات الممنوحة,-${totalDiscounts},`,
+    `صافي المبيعات (Net Revenue),${netRevenue},`,
     `تكلفة البضائع المباعة (COGS),-${totalCogs},`,
     `مجمل الربح التجاري (Gross Profit),${grossProfit},`,
     `,,`,
