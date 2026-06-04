@@ -26,8 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Check auth first
   initAuth();
 
-  // Initialize theme mode
-  initTheme();
+  // Ensure dark class is removed and clean up theme key
+  document.documentElement.classList.remove("dark");
+  localStorage.removeItem("elbaz_theme");
 
   // Bind global UI events
   initRouter();
@@ -349,18 +350,6 @@ function initGlobalEvents() {
       if (!alertBtn.contains(e.target) && !notificationPopover.contains(e.target)) {
         notificationPopover.classList.add("hidden");
       }
-    });
-  }
-
-  // Theme toggle button
-  const themeToggleBtn = document.getElementById("theme-toggle-btn");
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
-      const currentTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-      const newTheme = currentTheme === "dark" ? "light" : "dark";
-      localStorage.setItem("elbaz_theme", newTheme);
-      applyTheme(newTheme);
-      showToast(newTheme === "dark" ? "تم تفعيل الوضع الليلي" : "تم تفعيل الوضع النهاري", "success");
     });
   }
 
@@ -797,34 +786,5 @@ window.initAuth = function() {
     loginOverlay.classList.add("hidden");
   } else {
     loginOverlay.classList.remove("hidden");
-  }
-};
-
-/**
- * Initialize dark mode theme based on stored preference
- */
-window.initTheme = function() {
-  const savedTheme = localStorage.getItem("elbaz_theme") || "light";
-  applyTheme(savedTheme);
-};
-
-/**
- * Apply the selected theme to the document and toggle icons
- */
-window.applyTheme = function(theme) {
-  const icon = document.getElementById("theme-icon");
-  if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-    if (icon) {
-      icon.setAttribute("data-lucide", "sun");
-    }
-  } else {
-    document.documentElement.classList.remove("dark");
-    if (icon) {
-      icon.setAttribute("data-lucide", "moon");
-    }
-  }
-  if (window.lucide) {
-    lucide.createIcons();
   }
 };
