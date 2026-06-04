@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("pay-modal-submit-save-only")?.addEventListener("click", () => finalizePOSOrder(false));
 
   document.getElementById("pos-barcode-mode-btn")?.addEventListener("click", toggleBarcodeMode);
+  document.getElementById("pos-hold-cart-btn")?.addEventListener("click", suspendActiveCart);
 
   document.getElementById("pay-modal-paid")?.addEventListener("input", recalculateCheckoutPaymentBalances);
   document.getElementById("pay-modal-discount")?.addEventListener("input", recalculateCheckoutPaymentBalances);
@@ -55,6 +56,7 @@ window.renderPOS = function() {
 
   renderPOSCatalog();
   renderPOSCart();
+  renderSuspendedCarts();
 };
 
 /**
@@ -172,6 +174,7 @@ function handlePOSSearch(e) {
     const qty = parseFloat(matchedProd["Current Quantity"]) || 0;
     if (qty > 0) {
       addProductToCart(matchedProd["Product ID"]);
+      playBeep();
       e.target.value = "";
       renderPOSCatalog();
       showToast(`تم مسح الباركود وإضافة: ${matchedProd["Product Name"]}`, "success");
@@ -681,3 +684,169 @@ window.printInvoiceFromHistory = function(invoiceNumber) {
 
 // Expose printInvoice globally for CRM invoice checkouts
 window.printInvoice = printInvoice;
+
+/**
+ * Plays a short, high-pitched beep sound using Web Audio API
+ */
+function playBeep() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, ctx.currentTime); // 800 Hz pitch
+    
+    gain.gain.setValueAtTime(0.1, ctx.currentTime); // moderate volume
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); // fade out quickly over 100ms
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.1);
+  } catch (error) {
+    console.warn("Could not play audio beep:", error);
+  }
+}
+
+// Initialize suspended carts list in appState if not defined
+if (!window.appState.suspendedCarts) {
+  try {
+    const saved = localStorage.getItem("elbaz_suspended_carts");
+    window.appState.suspendedCarts = saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    window.appState.suspendedCarts = [];
+  }
+}
+
+/**
+ * Suspends the active POS cart and saves it to localStorage
+ */
+function suspendActiveCart() {
+  if (!posCart || posCart.length === 0) {
+    showToast("السلة فارغة حالياً ولا يمكن تعليقها!", "warning");
+    return;
+  }
+
+  const defaultName = `سلة #${window.appState.suspendedCarts.length + 1} (${new Date().toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })})`;
+  const nameOfCart = prompt("برجاء إدخال اسم أو رقم السلة المعلقة للانتظار:", defaultName);
+  
+  if (nameOfCart === null) {
+    return; // Cancelled by user
+  }
+
+  const cartName = nameOfCart.trim() || defaultName;
+  const customerSelect = document.getElementById("pos-customer-select");
+  const customerId = customerSelect ? customerSelect.value : "GENERIC";
+  const customerName = customerSelect ? (customerSelect.options[customerSelect.selectedIndex]?.text || "عميل نقدي (عام)") : "عميل نقدي (عام)";
+  const totalAmount = posCart.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+
+  const suspendedCart = {
+    id: Date.now(),
+    name: cartName,
+    timestamp: new Date().toLocaleString("ar-EG"),
+    cart: [...posCart],
+    customerId: customerId,
+    customerName: customerName,
+    totalAmount: totalAmount
+  };
+
+  window.appState.suspendedCarts.push(suspendedCart);
+  localStorage.setItem("elbaz_suspended_carts", JSON.stringify(window.appState.suspendedCarts));
+  
+  // Clear current cart and reset customer selection
+  posCart = [];
+  if (customerSelect) {
+    customerSelect.value = "GENERIC";
+  }
+
+  renderPOSCart();
+  renderPOSCatalog();
+  renderSuspendedCarts();
+  showToast(`تم تعليق السلة [${cartName}] بنجاح`, "success");
+}
+
+/**
+ * Renders suspended/held carts in the right-side POS panel
+ */
+function renderSuspendedCarts() {
+  const container = document.getElementById("pos-suspended-carts-container");
+  const list = document.getElementById("pos-suspended-carts-list");
+  if (!container || !list) return;
+
+  const carts = window.appState.suspendedCarts || [];
+  if (carts.length === 0) {
+    container.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
+
+  container.classList.remove("hidden");
+  list.innerHTML = carts.map(c => `
+    <div class="flex items-center justify-between bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/40 p-2 rounded-lg text-xs hover:border-amber-300 dark:hover:border-amber-800 transition-all">
+      <div class="flex flex-col text-right col-span-2">
+        <span class="font-bold text-slate-800 dark:text-slate-200">${c.name}</span>
+        <span class="text-[10px] text-slate-400 dark:text-slate-500">${c.cart.length} أصناف • ${formatCurrency(c.totalAmount)}</span>
+      </div>
+      <div class="flex space-x-reverse space-x-1.5">
+        <button onclick="restoreSuspendedCart(${c.id})" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[10px] rounded-md font-bold transition-colors" title="استعادة السلة">استعادة</button>
+        <button onclick="deleteSuspendedCart(${c.id})" class="p-1 text-rose-500 hover:bg-rose-550 dark:hover:bg-rose-950/30 rounded transition-colors" title="حذف">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+/**
+ * Restores a suspended cart into the active POS cart
+ */
+window.restoreSuspendedCart = function(id) {
+  const carts = window.appState.suspendedCarts || [];
+  const foundIndex = carts.findIndex(c => c.id === id);
+  if (foundIndex === -1) return;
+
+  if (posCart && posCart.length > 0) {
+    const confirmReplace = confirm("هل تريد استعادة هذه السلة؟ سيتم استبدال المنتجات الموجودة حالياً في السلة.");
+    if (!confirmReplace) return;
+  }
+
+  const selectedCart = carts[foundIndex];
+  posCart = [...selectedCart.cart];
+
+  const customerSelect = document.getElementById("pos-customer-select");
+  if (customerSelect) {
+    customerSelect.value = selectedCart.customerId || "GENERIC";
+  }
+
+  // Remove from suspended list
+  carts.splice(foundIndex, 1);
+  localStorage.setItem("elbaz_suspended_carts", JSON.stringify(carts));
+
+  renderPOSCart();
+  renderPOSCatalog();
+  renderSuspendedCarts();
+  showToast(`تم استعادة السلة [${selectedCart.name}] بنجاح`, "success");
+};
+
+/**
+ * Deletes a suspended cart from localStorage list
+ */
+window.deleteSuspendedCart = function(id) {
+  const carts = window.appState.suspendedCarts || [];
+  const foundIndex = carts.findIndex(c => c.id === id);
+  if (foundIndex === -1) return;
+
+  const confirmDelete = confirm("هل أنت متأكد من حذف هذه السلة المعلقة نهائياً؟");
+  if (!confirmDelete) return;
+
+  const deletedName = carts[foundIndex].name;
+  carts.splice(foundIndex, 1);
+  localStorage.setItem("elbaz_suspended_carts", JSON.stringify(carts));
+
+  renderSuspendedCarts();
+  showToast(`تم حذف السلة [${deletedName}]`, "info");
+};
