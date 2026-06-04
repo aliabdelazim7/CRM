@@ -437,8 +437,14 @@ function updateSyncUI() {
     badge.textContent = "وضع التجربة";
     badge.className = "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800";
   } else {
-    badge.textContent = "متصل بجوجل شيت";
-    badge.className = "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800";
+    const queue = (typeof api.getPendingQueue === "function") ? api.getPendingQueue() : [];
+    if (queue.length > 0) {
+      badge.textContent = `انتظار المزامنة: ${queue.length} معلق`;
+      badge.className = "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 animate-pulse";
+    } else {
+      badge.textContent = "متصل بجوجل شيت";
+      badge.className = "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800";
+    }
   }
 }
 
