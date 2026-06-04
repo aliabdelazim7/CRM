@@ -19,14 +19,14 @@ window.renderDashboard = function() {
   const now = new Date();
   const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`; // YYYY-MM
 
-  // Sales Today
+  // Sales Today (calculating Net Sales = Total Amount - Discount)
   const salesToday = invoices
     .filter(inv => inv["Invoice Date"] && String(inv["Invoice Date"]).startsWith(todayStr))
-    .reduce((sum, inv) => sum + (parseFloat(inv["Total Amount"]) || 0), 0);
+    .reduce((sum, inv) => sum + ((parseFloat(inv["Total Amount"]) || 0) - (parseFloat(inv["Discount"]) || 0)), 0);
 
-  // Sales This Month
+  // Sales This Month (calculating Net Sales = Total Amount - Discount)
   const monthlyInvoices = invoices.filter(inv => inv["Invoice Date"] && inv["Invoice Date"].startsWith(currentMonthPrefix));
-  const salesThisMonth = monthlyInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Total Amount"]) || 0), 0);
+  const salesThisMonth = monthlyInvoices.reduce((sum, inv) => sum + ((parseFloat(inv["Total Amount"]) || 0) - (parseFloat(inv["Discount"]) || 0)), 0);
 
   // Discounts This Month
   const discountsThisMonth = monthlyInvoices.reduce((sum, inv) => sum + (parseFloat(inv["Discount"]) || 0), 0);
@@ -132,7 +132,7 @@ function buildDailySalesTimelineChart(invoices) {
   invoices.forEach(inv => {
     const date = inv["Invoice Date"] ? String(inv["Invoice Date"]).substring(0, 10) : "";
     if (salesMap[date] !== undefined) {
-      salesMap[date] += parseFloat(inv["Total Amount"]) || 0;
+      salesMap[date] += (parseFloat(inv["Total Amount"]) || 0) - (parseFloat(inv["Discount"]) || 0);
     }
   });
 
@@ -203,7 +203,7 @@ function buildPaymentMethodsChart(invoices) {
   invoices.forEach(inv => {
     const method = inv["Payment Method"];
     if (volumes[method] !== undefined) {
-      volumes[method] += parseFloat(inv["Total Amount"]) || 0;
+      volumes[method] += (parseFloat(inv["Total Amount"]) || 0) - (parseFloat(inv["Discount"]) || 0);
     }
   });
 
