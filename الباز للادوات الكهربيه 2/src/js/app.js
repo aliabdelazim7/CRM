@@ -304,8 +304,8 @@ function initGlobalEvents() {
       const pass = document.getElementById("login-password").value.trim();
 
       const currentConfig = api.loadConfig();
-      const correctEmail = currentConfig.adminEmail || "admin@elbaz.com";
-      const correctPass = currentConfig.adminPassword || "admin";
+      const correctEmail = currentConfig.adminEmail || "El7oksh@elbaz.com";
+      const correctPass = currentConfig.adminPassword || "El7oksh1";
 
       // Clear any previous session details from both storages first
       localStorage.removeItem("elbaz_session_active");
@@ -466,8 +466,8 @@ function loadSettingsFromConfig() {
     currency: config.currency || "EGP",
     address: config.address || "",
     phone: config.phone || "",
-    adminEmail: config.adminEmail || "admin@elbaz.com",
-    adminPassword: config.adminPassword || "admin",
+    adminEmail: config.adminEmail || "El7oksh@elbaz.com",
+    adminPassword: config.adminPassword || "El7oksh1",
     settingsPassword: config.settingsPassword || "admin_settings"
   };
   

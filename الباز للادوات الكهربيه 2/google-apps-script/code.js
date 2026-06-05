@@ -68,8 +68,8 @@ function initializeDatabase() {
       ["Address", "Cairo, Egypt"],
       ["Phone Number", "+20 123 456 7890"],
       ["Currency", "EGP"],
-      ["Admin Email", "admin@elbaz.com"],
-      ["Admin Password", "admin"],
+      ["Admin Email", "El7oksh@elbaz.com"],
+      ["Admin Password", "El7oksh1"],
       ["Settings Password", "admin_settings"],
       ["Initialized", "true"]
     ];
@@ -637,11 +637,11 @@ function authenticateToken(token) {
   
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) {
-    return token === "admin";
+    return token === "El7oksh1";
   }
   
   const keys = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-  let correctPassword = "admin"; // default fallback
+  let correctPassword = "El7oksh1"; // default fallback
   for (let i = 0; i < keys.length; i++) {
     if (keys[i][0] === "Admin Password") {
       correctPassword = String(keys[i][1]).trim();

@@ -15,8 +15,8 @@ const defaultSettings = {
   address: "",
   phone: "+201018907086",
   currency: "EGP",
-  adminEmail: "admin@elbaz.com",
-  adminPassword: "admin",
+  adminEmail: "El7oksh@elbaz.com",
+  adminPassword: "El7oksh1",
   settingsPassword: "admin_settings"
 };
 
@@ -56,8 +56,8 @@ const demoDatabase = {
     { "Key": "Address", "Value": "" },
     { "Key": "Phone Number", "Value": "+201018907086" },
     { "Key": "Currency", "Value": "EGP" },
-    { "Key": "Admin Email", "Value": "admin@elbaz.com" },
-    { "Key": "Admin Password", "Value": "admin" }
+    { "Key": "Admin Email", "Value": "El7oksh@elbaz.com" },
+    { "Key": "Admin Password", "Value": "El7oksh1" }
   ],
   Archive_Customers: []
 };
