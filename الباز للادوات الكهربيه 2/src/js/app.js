@@ -249,6 +249,52 @@ function initGlobalEvents() {
     });
   }
 
+  // Database Reset Event Hook
+  const resetDbBtn = document.getElementById("settings-reset-db-btn");
+  const resetDbModal = document.getElementById("reset-db-modal");
+  const resetDbCancelBtn = document.getElementById("reset-db-cancel-btn");
+  const resetDbConfirmBtn = document.getElementById("reset-db-confirm-btn");
+  const resetDbConfirmInput = document.getElementById("reset-db-confirm-input");
+
+  if (resetDbBtn && resetDbModal) {
+    resetDbBtn.addEventListener("click", () => {
+      resetDbConfirmInput.value = "";
+      resetDbConfirmBtn.disabled = true;
+      resetDbModal.classList.remove("hidden");
+      resetDbModal.classList.add("flex");
+    });
+  }
+
+  if (resetDbCancelBtn && resetDbModal) {
+    resetDbCancelBtn.addEventListener("click", () => {
+      resetDbModal.classList.add("hidden");
+      resetDbModal.classList.remove("flex");
+    });
+  }
+
+  if (resetDbConfirmInput && resetDbConfirmBtn) {
+    resetDbConfirmInput.addEventListener("input", (e) => {
+      resetDbConfirmBtn.disabled = (e.target.value.trim() !== "مسح البيانات");
+    });
+  }
+
+  if (resetDbConfirmBtn && resetDbModal) {
+    resetDbConfirmBtn.addEventListener("click", async () => {
+      resetDbModal.classList.add("hidden");
+      resetDbModal.classList.remove("flex");
+      showLoader("جاري مسح قاعدة البيانات...");
+      try {
+        await api.clearDatabase();
+        showToast("تم تصفير قاعدة البيانات بنجاح", "success");
+        await syncDatabase(true);
+      } catch (err) {
+        showToast(`فشل تصفير قاعدة البيانات: ${err.message}`, "error");
+      } finally {
+        hideLoader();
+      }
+    });
+  }
+
   // Login Form Submission
   const loginForm = document.getElementById("login-form");
   if (loginForm) {

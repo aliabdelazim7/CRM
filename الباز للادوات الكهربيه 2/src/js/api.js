@@ -372,6 +372,10 @@ class ApiService {
     return this.postAction("addPayment", { invoiceNumber, amount, discountRemaining });
   }
 
+  async clearDatabase() {
+    return this.postAction("clearDatabase", {});
+  }
+
   // --- Mock Execution for offline/independent run ---
 
   executeMockAction(action, payload) {
@@ -396,6 +400,9 @@ class ApiService {
               break;
             case "addPayment":
               this.mockAddPayment(payload);
+              break;
+            case "clearDatabase":
+              this.mockClearDatabase();
               break;
             default:
               throw new Error("Unknown mock action: " + action);
@@ -585,6 +592,15 @@ class ApiService {
         this.db.Customers[cIndex]["Outstanding Balance"] = Math.max(0, curBal - debtCleared);
       }
     }
+  }
+
+  mockClearDatabase() {
+    this.db.Products = [];
+    this.db.Customers = [];
+    this.db.Archive_Customers = [];
+    this.db.Invoices = [];
+    this.db.InvoiceItems = [];
+    this.db.Expenses = [];
   }
 
   getPendingQueue() {

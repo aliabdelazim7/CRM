@@ -781,19 +781,42 @@
               </form>
             </div>
 
-            <!-- Settings Help Tips -->
-            <div class="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-              <h3 class="text-sm font-bold text-slate-800 font-display border-b border-slate-100 pb-3">Setup Guide</h3>
-              
-              <div class="space-y-3 text-xs text-slate-500 leading-relaxed">
-                <p class="font-bold text-slate-700">Connect Google Sheets in 3 steps:</p>
-                <ol class="list-decimal pl-4 space-y-2">
-                  <li>Open a Google Sheet, and select <strong>Extensions &gt; Apps Script</strong>.</li>
-                  <li>Clear existing script, copy code from <code>google-apps-script/code.js</code>, and paste it.</li>
-                  <li>Click <strong>Deploy &gt; New Deployment</strong>. Choose <strong>Web App</strong>, change Access to <strong>Anyone</strong>, and deploy. Copy the Web App URL and paste it left.</li>
-                </ol>
-                <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-indigo-700 mt-4 text-[11px]">
-                  <strong>Note:</strong> When you connect the API URL, the system will download sheet data and run. You can toggle off the URL at any time to run independently.
+            <!-- Settings Help Tips & Danger Zone -->
+            <div class="space-y-6">
+              <!-- Settings Help Tips -->
+              <div class="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-slate-800 font-display border-b border-slate-100 pb-3">Setup Guide</h3>
+                
+                <div class="space-y-3 text-xs text-slate-500 leading-relaxed">
+                  <p class="font-bold text-slate-700">Connect Google Sheets in 3 steps:</p>
+                  <ol class="list-decimal pl-4 space-y-2">
+                    <li>Open a Google Sheet, and select <strong>Extensions &gt; Apps Script</strong>.</li>
+                    <li>Clear existing script, copy code from <code>google-apps-script/code.js</code>, and paste it.</li>
+                    <li>Click <strong>Deploy &gt; New Deployment</strong>. Choose <strong>Web App</strong>, change Access to <strong>Anyone</strong>, and deploy. Copy the Web App URL and paste it left.</li>
+                  </ol>
+                  <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-indigo-700 mt-4 text-[11px]">
+                    <strong>Note:</strong> When you connect the API URL, the system will download sheet data and run. You can toggle off the URL at any time to run independently.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Danger Zone -->
+              <div class="bg-red-50 border border-red-200 rounded-2xl p-6 space-y-4">
+                <h3 class="text-sm font-bold text-red-800 font-display border-b border-red-100 pb-3 flex items-center space-x-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-alert"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                  <span>Danger Zone / منطقة الخطورة</span>
+                </h3>
+                <p class="text-xs text-red-700 leading-relaxed font-semibold">
+                  تحذير: سيتم حذف كافة المنتجات، العملاء، الفواتير، والمصاريف نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                </p>
+                <p class="text-[10px] text-red-600 leading-relaxed">
+                  Warning: Wiping the database deletes all transactional and master records. Settings and connection configuration will be preserved.
+                </p>
+                <div class="pt-2">
+                  <button id="settings-reset-db-btn" type="button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-2.5 px-4 rounded-lg transition-all shadow-sm flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <span>تصفير قاعدة البيانات / Clear Database</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1365,6 +1388,52 @@
       <div class="mt-6 text-center border-t border-slate-100 pt-4 w-full">
         <p class="text-[10px] text-slate-400 font-semibold mb-1">لعرض وتجربة النظام (Demo Mode):</p>
         <p class="text-[10px] text-slate-500 font-mono">البريد: <span class="bg-slate-100 px-1 py-0.5 rounded font-bold">demo@elbaz.com</span> | كلمة المرور: <span class="bg-slate-100 px-1 py-0.5 rounded font-bold">demo</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Reset Database Confirmation -->
+  <div id="reset-db-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 items-center justify-center hidden" dir="rtl">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 relative shadow-2xl border border-slate-100 mx-4 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center space-x-3 space-x-reverse text-red-600">
+        <div class="bg-red-50 p-2 rounded-lg shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-alert"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        </div>
+        <h3 class="text-base font-bold font-display text-slate-900">تصفير قاعدة البيانات | Database Reset</h3>
+      </div>
+      
+      <div class="space-y-2 text-right">
+        <p class="text-xs font-bold text-red-600 leading-relaxed">
+          تحذير هام جداً:
+        </p>
+        <p class="text-xs text-slate-600 leading-relaxed font-semibold">
+          هذا الإجراء سيقوم بحذف **جميع البيانات** المسجلة في النظام نهائياً وتشمل:
+        </p>
+        <ul class="list-disc pr-5 text-[11px] text-slate-500 space-y-1">
+          <li>كافة المنتجات المخزنة والكميات</li>
+          <li>كافة العملاء وسجلات المديونيات</li>
+          <li>كافة الفواتير والمبيعات السابقة</li>
+          <li>كافة المصاريف المسجلة</li>
+        </ul>
+        <p class="text-[11px] text-slate-500 leading-relaxed mt-2">
+          * لن يتم حذف إعدادات الاتصال أو كلمات المرور. هذا الإجراء غير قابل للتراجع عنه بأي شكل.
+        </p>
+      </div>
+
+      <div class="pt-2 text-right">
+        <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+          لتأكيد الحذف، اكتب كلمة <span class="font-bold text-red-600 select-all font-mono">مسح البيانات</span> أدناه:
+        </label>
+        <input type="text" id="reset-db-confirm-input" class="w-full border border-slate-200 rounded-lg py-2 px-3 text-xs bg-white text-slate-800 text-center font-bold focus:outline-none" placeholder="مسح البيانات">
+      </div>
+
+      <div class="flex space-x-3 space-x-reverse pt-3">
+        <button type="button" id="reset-db-confirm-btn" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-md shadow-red-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          تأكيد المسح نهائياً
+        </button>
+        <button type="button" id="reset-db-cancel-btn" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 font-semibold">
+          إلغاء / Cancel
+        </button>
       </div>
     </div>
   </div>

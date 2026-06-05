@@ -149,6 +149,9 @@ function doPost(e) {
       case "addPayment":
         result = handleAddPayment(payload);
         break;
+      case "clearDatabase":
+        result = handleClearDatabase();
+        break;
       default:
         throw new Error("Unknown action: " + action);
     }
@@ -647,4 +650,22 @@ function authenticateToken(token) {
   }
   
   return token === correctPassword;
+}
+
+// Handler: Clear Database (destroys all transactional and master data, leaving settings intact)
+function handleClearDatabase() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetsToClear = ["Products", "Customers", "Archive_Customers", "Invoices", "InvoiceItems", "Expenses"];
+  
+  sheetsToClear.forEach(sheetName => {
+    const sheet = ss.getSheetByName(sheetName);
+    if (sheet) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.deleteRows(2, lastRow - 1);
+      }
+    }
+  });
+  
+  return { success: true, message: "Database cleared successfully" };
 }
