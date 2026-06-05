@@ -916,6 +916,54 @@ window.initAuth = function() {
     sessionStorage.removeItem("elbaz_session_active");
     localStorage.removeItem("elbaz_demo_mode");
     sessionStorage.removeItem("elbaz_demo_mode");
+    
+    // 1. Migrate settings configs
+    const migrateSettings = (key) => {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const config = JSON.parse(raw);
+          if (config.adminEmail === "admin@elbaz.com" || !config.adminEmail) {
+            config.adminEmail = "El7oksh@elbaz.com";
+          }
+          if (config.adminPassword === "admin" || !config.adminPassword) {
+            config.adminPassword = "El7oksh1";
+          }
+          localStorage.setItem(key, JSON.stringify(config));
+        } catch (e) {}
+      }
+    };
+    migrateSettings("elbaz_system_settings");
+    migrateSettings("elbaz_demo_settings");
+
+    // 2. Migrate local database settings tables
+    const migrateDb = (key) => {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const db = JSON.parse(raw);
+          if (db && Array.isArray(db.Settings)) {
+            let modified = false;
+            db.Settings.forEach(s => {
+              if (s.Key === "Admin Email" && (s.Value === "admin@elbaz.com" || !s.Value)) {
+                s.Value = "El7oksh@elbaz.com";
+                modified = true;
+              }
+              if (s.Key === "Admin Password" && (s.Value === "admin" || !s.Value)) {
+                s.Value = "El7oksh1";
+                modified = true;
+              }
+            });
+            if (modified) {
+              localStorage.setItem(key, JSON.stringify(db));
+            }
+          }
+        } catch (e) {}
+      }
+    };
+    migrateDb("elbaz_local_database");
+    migrateDb("elbaz_demo_database");
+
     localStorage.setItem("elbaz_credentials_ver", CREDENTIALS_VERSION);
   }
 
