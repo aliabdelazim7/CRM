@@ -68,6 +68,9 @@ function initializeDatabase() {
       ["Address", "Cairo, Egypt"],
       ["Phone Number", "+20 123 456 7890"],
       ["Currency", "EGP"],
+      ["Admin Email", "admin@elbaz.com"],
+      ["Admin Password", "admin"],
+      ["Settings Password", "admin_settings"],
       ["Initialized", "true"]
     ];
     settingsSheet.getRange(2, 1, defaultSettings.length, 2).setValues(defaultSettings);

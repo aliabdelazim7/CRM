@@ -835,3 +835,18 @@ window.initAuth = function() {
     loginOverlay.classList.remove("hidden");
   }
 };
+
+/**
+ * Settings Page rendering coordination
+ */
+window.renderSettings = function() {
+  const isDemo = localStorage.getItem("elbaz_demo_mode") === "true" || sessionStorage.getItem("elbaz_demo_mode") === "true";
+  const warningBanner = document.getElementById("settings-demo-warning");
+  if (warningBanner) {
+    if (isDemo) {
+      warningBanner.classList.remove("hidden");
+    } else {
+      warningBanner.classList.add("hidden");
+    }
+  }
+};

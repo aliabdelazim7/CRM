@@ -270,6 +270,7 @@ class ApiService {
             if (s.Key === "Currency") loadedSettings.currency = s.Value;
             if (s.Key === "Admin Email") loadedSettings.adminEmail = s.Value;
             if (s.Key === "Admin Password") loadedSettings.adminPassword = s.Value;
+            if (s.Key === "Settings Password") loadedSettings.settingsPassword = s.Value;
           });
           this.saveConfig(loadedSettings);
         }
@@ -526,8 +527,11 @@ class ApiService {
       if (s.Key === "Currency") this.settings.currency = s.Value;
       if (s.Key === "Admin Email") this.settings.adminEmail = s.Value;
       if (s.Key === "Admin Password") this.settings.adminPassword = s.Value;
+      if (s.Key === "Settings Password") this.settings.settingsPassword = s.Value;
     });
-    localStorage.setItem(API_CONFIG_KEY, JSON.stringify(this.settings));
+    const isDemoMode = isDemoActive();
+    const configKey = isDemoMode ? "elbaz_demo_settings" : API_CONFIG_KEY;
+    localStorage.setItem(configKey, JSON.stringify(this.settings));
   }
 
   mockAddPayment({ invoiceNumber, amount, discountRemaining }) {
