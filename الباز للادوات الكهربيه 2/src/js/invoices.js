@@ -399,7 +399,16 @@ function recalculateCheckoutPaymentBalances() {
   let total = 0;
   posCart.forEach(i => total += i.totalPrice);
 
-  const discount = parseFloat(document.getElementById("pay-modal-discount")?.value) || 0;
+  let discount = parseFloat(document.getElementById("pay-modal-discount")?.value) || 0;
+  if (discount < 0) {
+    discount = 0;
+    document.getElementById("pay-modal-discount").value = 0;
+  }
+  if (discount > total) {
+    discount = total;
+    document.getElementById("pay-modal-discount").value = total.toFixed(2);
+  }
+
   const net = Math.max(0, total - discount);
 
   const netLabel = document.getElementById("pay-modal-net-label");
@@ -407,7 +416,12 @@ function recalculateCheckoutPaymentBalances() {
     netLabel.textContent = formatCurrency(net);
   }
 
-  const paid = parseFloat(document.getElementById("pay-modal-paid").value) || 0;
+  let paid = parseFloat(document.getElementById("pay-modal-paid").value) || 0;
+  if (paid < 0) {
+    paid = 0;
+    document.getElementById("pay-modal-paid").value = 0;
+  }
+
   const remaining = Math.max(0, net - paid);
 
   const remInput = document.getElementById("pay-modal-remaining");
@@ -493,6 +507,11 @@ async function saveQuickCustomerFromCheckout() {
  * Complete Checkout Transaction
  */
 async function finalizePOSOrder(shouldPrint = true) {
+  if (posCart.length === 0) {
+    showToast("تنبيه: سلة المشتريات فارغة. يرجى إضافة منتجات أولاً.", "warning");
+    return;
+  }
+
   const customerId = document.getElementById("pay-modal-customer-select").value;
   const paymentMethod = document.getElementById("pay-modal-method").value;
   const paidAmount = parseFloat(document.getElementById("pay-modal-paid").value) || 0;
@@ -503,6 +522,16 @@ async function finalizePOSOrder(shouldPrint = true) {
   posCart.forEach(item => totalAmount += item.totalPrice);
 
   const discountAmount = parseFloat(document.getElementById("pay-modal-discount")?.value) || 0;
+  if (discountAmount < 0 || discountAmount > totalAmount) {
+    showToast("تنبيه: قيمة الخصم غير صالحة.", "warning");
+    return;
+  }
+
+  if (paidAmount < 0) {
+    showToast("تنبيه: القيمة المدفوعة يجب أن تكون موجبة.", "warning");
+    return;
+  }
+
   const remainingAmount = Math.max(0, totalAmount - discountAmount - paidAmount);
   
   if (customerId === "GENERIC" && remainingAmount > 0) {
