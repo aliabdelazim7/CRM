@@ -30,6 +30,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove("dark");
   localStorage.removeItem("elbaz_theme");
 
+  // Show login success toast if navigated from login screen
+  const loginToast = sessionStorage.getItem("elbaz_login_toast");
+  if (loginToast) {
+    if (loginToast === "demo") {
+      showToast("تم تسجيل الدخول في وضع العرض التجريبي (Demo Mode)", "success");
+    } else if (loginToast === "admin") {
+      showToast("تم تسجيل الدخول بنجاح", "success");
+    }
+    sessionStorage.removeItem("elbaz_login_toast");
+  }
+
   // Bind global UI events
   initRouter();
   initGlobalEvents();
@@ -233,19 +244,13 @@ function initGlobalEvents() {
       if (email === "demo@elbaz.com" && pass === "demo") {
         localStorage.setItem("elbaz_session_active", "true");
         localStorage.setItem("elbaz_demo_mode", "true");
-        // Reload settings and database under sandboxed keys
-        api.settings = api.loadConfig();
-        api.db = api.loadLocalDb();
-        showToast("تم تسجيل الدخول في وضع العرض التجريبي (Demo Mode)", "success");
-        initAuth();
+        sessionStorage.setItem("elbaz_login_toast", "demo");
+        location.reload();
       } else if (email === correctEmail && pass === correctPass) {
         localStorage.setItem("elbaz_session_active", "true");
         localStorage.setItem("elbaz_demo_mode", "false");
-        // Reload real settings and database
-        api.settings = api.loadConfig();
-        api.db = api.loadLocalDb();
-        showToast("تم تسجيل الدخول بنجاح", "success");
-        initAuth();
+        sessionStorage.setItem("elbaz_login_toast", "admin");
+        location.reload();
       } else {
         showToast("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة!", "error");
       }
