@@ -6,6 +6,8 @@
 const API_CONFIG_KEY = "elbaz_system_settings";
 const LOCAL_DB_KEY = "elbaz_local_database";
 
+const isDemoActive = () => localStorage.getItem("elbaz_demo_mode") === "true" || sessionStorage.getItem("elbaz_demo_mode") === "true";
+
 // Default settings object - Localized to user's Google Sheets URL
 const defaultSettings = {
   webAppUrl: "https://script.google.com/macros/s/AKfycbydgHWkKR5fp5_mZCe7hGymmHhjP85-PUF1FDVtLPmFa4BJYtekRkwZlBQ0hjjRF2lC_Q/exec",
@@ -121,11 +123,11 @@ class ApiService {
   }
 
   get isMockMode() {
-    return (localStorage.getItem("elbaz_demo_mode") === "true") || !this.settings.webAppUrl;
+    return isDemoActive() || !this.settings.webAppUrl;
   }
 
   loadConfig() {
-    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const isDemoMode = isDemoActive();
     const configKey = isDemoMode ? "elbaz_demo_settings" : API_CONFIG_KEY;
     const data = localStorage.getItem(configKey);
     if (data) {
@@ -169,14 +171,14 @@ class ApiService {
   }
 
   saveConfig(newSettings) {
-    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const isDemoMode = isDemoActive();
     const configKey = isDemoMode ? "elbaz_demo_settings" : API_CONFIG_KEY;
     this.settings = { ...this.settings, ...newSettings };
     localStorage.setItem(configKey, JSON.stringify(this.settings));
   }
 
   loadLocalDb() {
-    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const isDemoMode = isDemoActive();
     const dbKey = isDemoMode ? "elbaz_demo_database" : LOCAL_DB_KEY;
     const data = localStorage.getItem(dbKey);
     if (data) {
@@ -221,7 +223,7 @@ class ApiService {
   }
 
   saveLocalDb() {
-    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const isDemoMode = isDemoActive();
     const dbKey = isDemoMode ? "elbaz_demo_database" : LOCAL_DB_KEY;
     localStorage.setItem(dbKey, JSON.stringify(this.db));
   }

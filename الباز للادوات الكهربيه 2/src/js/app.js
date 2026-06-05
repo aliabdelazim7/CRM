@@ -241,14 +241,23 @@ function initGlobalEvents() {
       const correctEmail = currentConfig.adminEmail || "admin@elbaz.com";
       const correctPass = currentConfig.adminPassword || "admin";
 
+      // Clear any previous session details from both storages first
+      localStorage.removeItem("elbaz_session_active");
+      localStorage.removeItem("elbaz_demo_mode");
+      sessionStorage.removeItem("elbaz_session_active");
+      sessionStorage.removeItem("elbaz_demo_mode");
+
+      const rememberMe = document.getElementById("login-remember")?.checked;
+      const storage = rememberMe ? localStorage : sessionStorage;
+
       if (email === "demo@elbaz.com" && pass === "demo") {
-        localStorage.setItem("elbaz_session_active", "true");
-        localStorage.setItem("elbaz_demo_mode", "true");
+        storage.setItem("elbaz_session_active", "true");
+        storage.setItem("elbaz_demo_mode", "true");
         sessionStorage.setItem("elbaz_login_toast", "demo");
         location.reload();
       } else if (email === correctEmail && pass === correctPass) {
-        localStorage.setItem("elbaz_session_active", "true");
-        localStorage.setItem("elbaz_demo_mode", "false");
+        storage.setItem("elbaz_session_active", "true");
+        storage.setItem("elbaz_demo_mode", "false");
         sessionStorage.setItem("elbaz_login_toast", "admin");
         location.reload();
       } else {
@@ -284,6 +293,8 @@ function initGlobalEvents() {
       if (confirmLogout) {
         localStorage.removeItem("elbaz_session_active");
         localStorage.removeItem("elbaz_demo_mode");
+        sessionStorage.removeItem("elbaz_session_active");
+        sessionStorage.removeItem("elbaz_demo_mode");
         location.reload();
       }
     });
@@ -399,7 +410,7 @@ function loadSettingsFromConfig() {
   const headerCurrency = document.getElementById("header-currency-code");
   const loginTitle = document.getElementById("login-business-title");
   
-  const isDemo = localStorage.getItem("elbaz_demo_mode") === "true";
+  const isDemo = localStorage.getItem("elbaz_demo_mode") === "true" || sessionStorage.getItem("elbaz_demo_mode") === "true";
   if (navTitle) {
     if (isDemo) {
       navTitle.innerHTML = window.appState.settings.businessName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
@@ -817,8 +828,8 @@ window.initAuth = function() {
   const loginOverlay = document.getElementById("login-overlay");
   if (!loginOverlay) return;
 
-  const sessionActive = localStorage.getItem("elbaz_session_active");
-  if (sessionActive === "true") {
+  const sessionActive = localStorage.getItem("elbaz_session_active") === "true" || sessionStorage.getItem("elbaz_session_active") === "true";
+  if (sessionActive) {
     loginOverlay.classList.add("hidden");
   } else {
     loginOverlay.classList.remove("hidden");
