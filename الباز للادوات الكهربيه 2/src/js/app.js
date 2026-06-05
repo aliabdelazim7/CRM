@@ -910,7 +910,7 @@ window.initAuth = function() {
   if (!loginOverlay) return;
 
   // Force logout old sessions (migrating to new credentials version)
-  const CREDENTIALS_VERSION = "v1_el7oksh";
+  const CREDENTIALS_VERSION = "v2_el7oksh";
   if (localStorage.getItem("elbaz_credentials_ver") !== CREDENTIALS_VERSION) {
     localStorage.removeItem("elbaz_session_active");
     sessionStorage.removeItem("elbaz_session_active");
