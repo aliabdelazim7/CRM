@@ -88,6 +88,12 @@ function doGet(e) {
     // Wait up to 30 seconds for lock
     lock.waitLock(30000);
     
+    // Authenticate request
+    const token = e && e.parameter ? e.parameter.token : null;
+    if (!authenticateToken(token)) {
+      return createJsonResponse({ success: false, error: "Unauthorized: Invalid or missing token" });
+    }
+    
     const dbData = readAllTables();
     return createJsonResponse({ success: true, data: dbData });
   } catch (err) {
@@ -109,6 +115,13 @@ function doPost(e) {
     }
     
     const request = JSON.parse(e.postData.contents);
+    
+    // Authenticate request
+    const token = request.token;
+    if (!authenticateToken(token)) {
+      return createJsonResponse({ success: false, error: "Unauthorized: Invalid or missing token" });
+    }
+    
     const action = request.action;
     const payload = request.payload;
     
@@ -611,4 +624,27 @@ function handleAddPayment(paymentData) {
   }
   
   return { invoiceNumber: invoiceNumber, paidAmount: newPaid, remainingAmount: newRemaining, status: newStatus };
+}
+
+// Authenticates security token using Admin Password
+function authenticateToken(token) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Settings");
+  if (!sheet) return false;
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) {
+    return token === "admin";
+  }
+  
+  const keys = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  let correctPassword = "admin"; // default fallback
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i][0] === "Admin Password") {
+      correctPassword = String(keys[i][1]).trim();
+      break;
+    }
+  }
+  
+  return token === correctPassword;
 }

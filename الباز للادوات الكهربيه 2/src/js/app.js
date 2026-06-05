@@ -3,6 +3,17 @@
  * Manages global state, routing, notification toasts, loaders, and triggers module renders
  */
 
+// Global security helper to prevent HTML injection (XSS)
+window.escapeHtml = function(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 // Global State
 window.appState = {
   db: {
@@ -62,6 +73,15 @@ function initRouter() {
   const routes = ["dashboard", "pos", "products", "customers", "expenses", "reports", "settings"];
   
   const handleRoute = () => {
+    // Session Active Validation Gate
+    const sessionActive = localStorage.getItem("elbaz_session_active") === "true" || sessionStorage.getItem("elbaz_session_active") === "true";
+    if (!sessionActive) {
+      const loginOverlay = document.getElementById("login-overlay");
+      if (loginOverlay) loginOverlay.classList.remove("hidden");
+      window.location.hash = "#login";
+      return;
+    }
+
     let hash = window.location.hash.replace("#", "");
     if (!routes.includes(hash)) {
       hash = "dashboard";
@@ -411,21 +431,22 @@ function loadSettingsFromConfig() {
   const loginTitle = document.getElementById("login-business-title");
   
   const isDemo = localStorage.getItem("elbaz_demo_mode") === "true" || sessionStorage.getItem("elbaz_demo_mode") === "true";
+  const escapedBizName = escapeHtml(window.appState.settings.businessName);
   if (navTitle) {
     if (isDemo) {
-      navTitle.innerHTML = window.appState.settings.businessName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
+      navTitle.innerHTML = escapedBizName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
     } else {
       navTitle.textContent = window.appState.settings.businessName;
     }
   }
   if (headerName) {
     if (isDemo) {
-      headerName.innerHTML = window.appState.settings.businessName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
+      headerName.innerHTML = escapedBizName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
     } else {
       headerName.textContent = window.appState.settings.businessName;
     }
   }
-  if (headerCurrency) headerCurrency.textContent = `العملة: ${window.appState.settings.currency}`;
+  if (headerCurrency) headerCurrency.textContent = `العملة: ${escapeHtml(window.appState.settings.currency)}`;
   if (loginTitle) loginTitle.textContent = window.appState.settings.businessName;
 
   // Set settings form inputs
@@ -435,6 +456,20 @@ function loadSettingsFromConfig() {
   if (emailInput) emailInput.value = window.appState.settings.adminEmail;
   if (passInput) passInput.value = window.appState.settings.adminPassword;
   if (settingsPassInput) settingsPassInput.value = window.appState.settings.settingsPassword;
+
+  // Secure API URL population and control
+  const urlInput = document.getElementById("settings-api-url");
+  if (urlInput) {
+    if (isDemo) {
+      urlInput.value = "";
+      urlInput.disabled = true;
+      urlInput.placeholder = "https://script.google.com/macros/s/••••••••/exec (Hidden in Demo)";
+    } else {
+      urlInput.value = config.webAppUrl || "";
+      urlInput.disabled = false;
+      urlInput.placeholder = "https://script.google.com/macros/s/.../exec";
+    }
+  }
 }
 
 /**

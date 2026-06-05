@@ -292,7 +292,7 @@ function renderTopSellersTable(items) {
   tbody.innerHTML = topSellers.map(([id, val]) => {
     return `
       <tr class="hover:bg-slate-50 text-xs border-b border-slate-50">
-        <td class="py-2.5 pr-4 font-semibold text-slate-800 text-right">${val.name}</td>
+        <td class="py-2.5 pr-4 font-semibold text-slate-800 text-right">${escapeHtml(val.name)}</td>
         <td class="py-2.5 text-left font-bold text-slate-700 font-mono pl-4">${val.qty} وحدة</td>
         <td class="py-2.5 text-left font-bold text-slate-900 font-mono pl-4">${formatCurrency(val.revenue)}</td>
       </tr>
@@ -341,8 +341,8 @@ function renderCriticalStockList(activeProducts) {
     return `
       <li class="py-3 flex items-center justify-between" dir="rtl">
         <div class="text-right">
-          <h5 class="text-xs font-bold text-slate-800">${p["Product Name"]}</h5>
-          <span class="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 py-0.5 rounded">${p["Product ID"]}</span>
+          <h5 class="text-xs font-bold text-slate-800">${escapeHtml(p["Product Name"])}</h5>
+          <span class="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 py-0.5 rounded">${escapeHtml(p["Product ID"])}</span>
         </div>
         <div class="text-left font-mono">
           <span class="inline-block px-2.5 py-0.5 rounded text-[9px] font-bold ${badgeClass}">

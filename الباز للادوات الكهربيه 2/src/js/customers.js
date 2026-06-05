@@ -118,10 +118,10 @@ window.renderCustomers = function() {
 
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
-        <td class="py-3 px-6 font-mono font-semibold text-slate-500">${c["Customer ID"]}</td>
-        <td class="py-3 px-6 font-bold text-slate-900 text-right">${c["Name"]}</td>
-        <td class="py-3 px-6 text-slate-600 font-mono text-right">${c["Phone Number"]}</td>
-        <td class="py-3 px-6 text-slate-500 text-right">${c["Address"] || "-"}</td>
+        <td class="py-3 px-6 font-mono font-semibold text-slate-500">${escapeHtml(c["Customer ID"])}</td>
+        <td class="py-3 px-6 font-bold text-slate-900 text-right">${escapeHtml(c["Name"])}</td>
+        <td class="py-3 px-6 text-slate-600 font-mono text-right">${escapeHtml(c["Phone Number"])}</td>
+        <td class="py-3 px-6 text-slate-500 text-right">${escapeHtml(c["Address"] || "-")}</td>
         <td class="py-3 px-6 text-left font-mono font-medium">${formatCurrency(c["Total Purchases"])}</td>
         <td class="py-3 px-6 text-left font-mono text-indigo-600 font-medium">${formatCurrency(totalDiscounts)}</td>
         <td class="py-3 px-6 text-left font-mono ${debtClass}">${formatCurrency(debtVal)}</td>
@@ -500,7 +500,7 @@ function renderCustomerInvoiceList(customerId) {
     // Build items table rows
     const itemsHtml = items.map(item => `
       <tr class="border-b border-slate-50 last:border-none">
-        <td class="py-1 px-2 text-slate-800 font-semibold font-sans text-right">${item["Product Name"]}</td>
+        <td class="py-1 px-2 text-slate-800 font-semibold font-sans text-right">${escapeHtml(item["Product Name"])}</td>
         <td class="py-1 px-2 text-center font-mono">${item["Quantity"]}</td>
         <td class="py-1 px-2 text-left font-mono text-slate-500">${formatCurrency(item["Selling Price"])}</td>
         <td class="py-1 px-2 text-left font-mono font-bold text-slate-900">${formatCurrency(item["Total Price"])}</td>
@@ -564,7 +564,7 @@ function renderCustomerInvoiceList(customerId) {
         </div>
 
         <!-- Notes if exists -->
-        ${i["Notes"] ? `<p class="text-[10px] text-slate-400 text-right font-medium">ملاحظات: ${i["Notes"]}</p>` : ""}
+        ${i["Notes"] ? `<p class="text-[10px] text-slate-400 text-right font-medium">ملاحظات: ${escapeHtml(i["Notes"])}</p>` : ""}
 
         <!-- Financial Summary -->
         <div class="flex justify-between items-center text-[10px] text-slate-500 bg-slate-50/50 p-2 rounded-lg font-mono" dir="rtl">
@@ -731,7 +731,7 @@ function populateCustInvoiceProductSelect() {
     activeProducts.map(p => {
       const available = parseFloat(p["Current Quantity"]) || 0;
       const price = parseFloat(p["Selling Price"]) || 0;
-      return `<option value="${p["Product ID"]}">${p["Product Name"]} (المتاح: ${available}) - ${price} جنيه</option>`;
+      return `<option value="${escapeHtml(p["Product ID"])}">${escapeHtml(p["Product Name"])} (المتاح: ${available}) - ${price} جنيه</option>`;
     }).join("");
 }
 
@@ -817,7 +817,7 @@ function renderCustInvoiceCart() {
     totalAmount += item.totalPrice;
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-[10px]">
-        <td class="py-1.5 px-2 text-right">${item.product["Product Name"]}</td>
+        <td class="py-1.5 px-2 text-right">${escapeHtml(item.product["Product Name"])}</td>
         <td class="py-1.5 px-2 text-center">${item.quantity}</td>
         <td class="py-1.5 px-2 text-left pl-2 font-bold">${formatCurrency(item.totalPrice)}</td>
         <td class="py-1.5 px-2 text-center">

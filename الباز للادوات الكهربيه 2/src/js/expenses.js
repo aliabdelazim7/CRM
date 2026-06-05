@@ -66,13 +66,13 @@ window.renderExpenses = function() {
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
         <td class="py-3 px-6 font-mono text-slate-500 font-semibold text-right">${e["Date"]}</td>
-        <td class="py-3 px-6 text-right font-mono">${e["Expense ID"]}</td>
+        <td class="py-3 px-6 text-right font-mono">${escapeHtml(e["Expense ID"])}</td>
         <td class="py-3 px-6 text-right">
           <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold ${getExpenseCategoryBadgeClass(e["Category"])}">
-            ${translateExpenseCategory(e["Category"])}
+            ${escapeHtml(translateExpenseCategory(e["Category"]))}
           </span>
         </td>
-        <td class="py-3 px-6 text-slate-700 text-right">${e["Notes"] || "-"}</td>
+        <td class="py-3 px-6 text-slate-700 text-right">${escapeHtml(e["Notes"] || "-")}</td>
         <td class="py-3 px-6 text-left font-bold text-slate-900 font-mono">${formatCurrency(e["Amount"])}</td>
       </tr>
     `;
@@ -190,7 +190,7 @@ function renderExpenseBreakdown(filteredExpenses) {
         <div class="flex justify-between items-center text-slate-700">
           <div class="flex items-center space-x-reverse space-x-1.5">
             <span class="w-2.5 h-2.5 rounded-full ${progressBg}"></span>
-            <span class="font-semibold">${translateExpenseCategory(cat)}</span>
+            <span class="font-semibold">${escapeHtml(translateExpenseCategory(cat))}</span>
           </div>
           <span class="font-mono font-bold">${formatCurrency(val)} (${percent}%)</span>
         </div>

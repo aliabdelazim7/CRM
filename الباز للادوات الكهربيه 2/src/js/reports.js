@@ -169,9 +169,9 @@ function buildSalesReport(start, end) {
 
     return `
       <tr class="border-b border-slate-100 text-xs hover:bg-slate-50">
-        <td class="py-2.5 px-4 font-mono font-bold text-indigo-600 hover:underline cursor-pointer text-right" onclick="printInvoiceFromHistory('${inv["Invoice Number"]}')">${inv["Invoice Number"]}</td>
-        <td class="py-2.5 px-4 font-mono text-right">${inv["Invoice Date"]}</td>
-        <td class="py-2.5 px-4 font-semibold text-slate-800 text-right">${inv["Customer Name"]}</td>
+        <td class="py-2.5 px-4 font-mono font-bold text-indigo-600 hover:underline cursor-pointer text-right" onclick="printInvoiceFromHistory('${inv["Invoice Number"]}')">${escapeHtml(inv["Invoice Number"])}</td>
+        <td class="py-2.5 px-4 font-mono text-right">${escapeHtml(inv["Invoice Date"])}</td>
+        <td class="py-2.5 px-4 font-semibold text-slate-800 text-right">${escapeHtml(inv["Customer Name"])}</td>
         <td class="py-2.5 px-4 text-slate-600 text-right">${methodAr}</td>
         <td class="py-2.5 px-4 text-center">
           <span class="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold ${inv["Status"] === "Paid" ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">${statusAr}</span>
@@ -251,9 +251,9 @@ function buildInventoryReport() {
 
     return `
       <tr class="border-b border-slate-100 text-xs hover:bg-slate-50">
-        <td class="py-2.5 px-4 font-mono text-slate-500 font-semibold text-right">${p["Product ID"]}</td>
-        <td class="py-2.5 px-4 font-bold text-slate-800 text-right">${p["Product Name"]}</td>
-        <td class="py-2.5 px-4 text-slate-500 text-right">${p["Category"]}</td>
+        <td class="py-2.5 px-4 font-mono text-slate-500 font-semibold text-right">${escapeHtml(p["Product ID"])}</td>
+        <td class="py-2.5 px-4 font-bold text-slate-800 text-right">${escapeHtml(p["Product Name"])}</td>
+        <td class="py-2.5 px-4 text-slate-500 text-right">${escapeHtml(p["Category"])}</td>
         <td class="py-2.5 px-4 text-center font-mono">${qty}</td>
         <td class="py-2.5 px-4 text-left font-mono">${formatCurrency(cost)}</td>
         <td class="py-2.5 px-4 text-left font-mono">${formatCurrency(sell)}</td>
@@ -320,10 +320,10 @@ function buildDebtsReport() {
 
     return `
       <tr class="border-b border-slate-100 text-xs hover:bg-slate-50">
-        <td class="py-2.5 px-4 font-mono text-slate-500 text-right">${c["Customer ID"]}</td>
-        <td class="py-2.5 px-4 font-bold text-slate-800 hover:underline cursor-pointer text-right" onclick="openCustomerDrawer('${c["Customer ID"]}')">${c["Name"]}</td>
-        <td class="py-2.5 px-4 font-mono text-slate-600 text-right">${c["Phone Number"]}</td>
-        <td class="py-2.5 px-4 text-slate-500 text-right">${c["Address"] || "-"}</td>
+        <td class="py-2.5 px-4 font-mono text-slate-500 text-right">${escapeHtml(c["Customer ID"])}</td>
+        <td class="py-2.5 px-4 font-bold text-slate-800 hover:underline cursor-pointer text-right" onclick="openCustomerDrawer('${escapeHtml(c["Customer ID"])}')">${escapeHtml(c["Name"])}</td>
+        <td class="py-2.5 px-4 font-mono text-slate-600 text-right">${escapeHtml(c["Phone Number"])}</td>
+        <td class="py-2.5 px-4 text-slate-500 text-right">${escapeHtml(c["Address"] || "-")}</td>
         <td class="py-2.5 px-4 text-left font-mono">${formatCurrency(purchases)}</td>
         <td class="py-2.5 px-4 text-left font-mono text-rose-600 font-bold">${formatCurrency(balance)}</td>
       </tr>
@@ -389,10 +389,10 @@ function buildExpensesReport(start, end) {
 
     return `
       <tr class="border-b border-slate-100 text-xs hover:bg-slate-50">
-        <td class="py-2.5 px-4 font-mono font-semibold text-slate-500 text-right">${exp["Date"]}</td>
-        <td class="py-2.5 px-4 font-mono text-slate-400 text-right">${exp["Expense ID"]}</td>
-        <td class="py-2.5 px-4 text-right"><span class="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700">${catAr}</span></td>
-        <td class="py-2.5 px-4 text-slate-600 text-right">${exp["Notes"]}</td>
+        <td class="py-2.5 px-4 font-mono font-semibold text-slate-500 text-right">${escapeHtml(exp["Date"])}</td>
+        <td class="py-2.5 px-4 font-mono text-slate-400 text-right">${escapeHtml(exp["Expense ID"])}</td>
+        <td class="py-2.5 px-4 text-right"><span class="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700">${escapeHtml(catAr)}</span></td>
+        <td class="py-2.5 px-4 text-slate-600 text-right">${escapeHtml(exp["Notes"])}</td>
         <td class="py-2.5 px-4 text-left font-mono font-bold text-slate-900">${formatCurrency(amt)}</td>
       </tr>
     `;
@@ -535,7 +535,7 @@ function buildProfitReport(start, end) {
           <div class="pr-4 space-y-2 border-r border-slate-200">
             ${Object.keys(expensesByCategory).map(cat => `
               <div class="flex justify-between text-xs text-slate-600">
-                <span>${catNamesAr[cat] || cat}</span>
+                <span>${escapeHtml(catNamesAr[cat] || cat)}</span>
                 <span class="font-mono font-medium">-${formatCurrency(expensesByCategory[cat])}</span>
               </div>
             `).join("") || `<div class="text-slate-400 text-xs italic pr-2">لم تسجل أي مصروفات تشغيلية في هذه الفترة.</div>`}

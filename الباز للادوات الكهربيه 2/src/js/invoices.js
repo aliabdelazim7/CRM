@@ -80,7 +80,7 @@ function populatePOSCustomerDropdown() {
 
   const currentVal = select.value;
   select.innerHTML = `<option value="GENERIC">عميل نقدي (عام)</option>` + 
-    activeCustomers.map(c => `<option value="${c["Customer ID"]}">${c["Name"]} (${c["Phone Number"]})</option>`).join("");
+    activeCustomers.map(c => `<option value="${escapeHtml(c["Customer ID"])}">${escapeHtml(c["Name"])} (${escapeHtml(c["Phone Number"])})</option>`).join("");
   
   if (currentVal) select.value = currentVal;
 }
@@ -144,10 +144,10 @@ function renderPOSCatalog() {
       <div ${clickHandler} class="border ${borderClass} ${bgClass} rounded-xl p-4 flex flex-col justify-between transition-all select-none group">
         <div>
           <div class="flex items-start justify-between">
-            <span class="text-[10px] text-indigo-500 font-semibold uppercase tracking-wider">${p["Category"]}</span>
+            <span class="text-[10px] text-indigo-500 font-semibold uppercase tracking-wider">${escapeHtml(p["Category"])}</span>
             ${statusLabel}
           </div>
-          <h4 class="font-bold text-xs text-slate-900 mt-1 line-clamp-2 text-right">${p["Product Name"]}</h4>
+          <h4 class="font-bold text-xs text-slate-900 mt-1 line-clamp-2 text-right">${escapeHtml(p["Product Name"])}</h4>
         </div>
         <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
           <span class="text-xs font-bold text-slate-800 font-mono">${formatCurrency(p["Selling Price"])}</span>
@@ -236,7 +236,7 @@ function renderPOSCart() {
     return `
       <div class="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs">
         <div class="flex-1 pl-3 text-right">
-          <h5 class="font-bold text-slate-800 line-clamp-1">${item.product["Product Name"]}</h5>
+          <h5 class="font-bold text-slate-800 line-clamp-1">${escapeHtml(item.product["Product Name"])}</h5>
           <span class="text-[10px] text-slate-400 font-medium font-mono">${formatCurrency(item.product["Selling Price"])} للوحدة</span>
         </div>
         <div class="flex items-center space-x-reverse space-x-3">
@@ -392,7 +392,7 @@ function populatePayModalCustomerDropdown() {
   const currentCatalogSelect = document.getElementById("pos-customer-select")?.value || "GENERIC";
 
   select.innerHTML = `<option value="GENERIC">عميل نقدي (عام)</option>` + 
-    activeCustomers.map(c => `<option value="${c["Customer ID"]}">${c["Name"]} (${c["Phone Number"]})</option>`).join("");
+    activeCustomers.map(c => `<option value="${escapeHtml(c["Customer ID"])}">${escapeHtml(c["Name"]} (${escapeHtml(c["Phone Number"])})</option>`).join("");
   
   select.value = currentCatalogSelect;
 }
@@ -591,8 +591,8 @@ function printInvoice(invoice, items) {
     return `
       <tr>
         <td class="py-2.5 px-3 text-right">
-          <div class="font-bold text-slate-800">${item["Product Name"]}</div>
-          <span class="text-[9px] text-slate-400 font-mono">${item["Product ID"]}</span>
+          <div class="font-bold text-slate-800">${escapeHtml(item["Product Name"])}</div>
+          <span class="text-[9px] text-slate-400 font-mono">${escapeHtml(item["Product ID"])}</span>
         </td>
         <td class="py-2.5 px-3 text-left font-mono">${formatCurrency(item["Selling Price"])}</td>
         <td class="py-2.5 px-3 text-center font-mono">${item["Quantity"]}</td>
@@ -722,7 +722,7 @@ function renderSuspendedCarts() {
   list.innerHTML = carts.map(c => `
     <div class="flex items-center justify-between bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/40 p-2 rounded-lg text-xs hover:border-amber-300 dark:hover:border-amber-800 transition-all">
       <div class="flex flex-col text-right col-span-2">
-        <span class="font-bold text-slate-800 dark:text-slate-200">${c.name}</span>
+        <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(c.name)}</span>
         <span class="text-[10px] text-slate-400 dark:text-slate-500">${c.cart.length} أصناف • ${formatCurrency(c.totalAmount)}</span>
       </div>
       <div class="flex space-x-reverse space-x-1.5">

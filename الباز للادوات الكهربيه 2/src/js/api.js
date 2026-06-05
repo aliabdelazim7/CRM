@@ -247,7 +247,8 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(this.settings.webAppUrl, {
+      const urlWithToken = `${this.settings.webAppUrl}${this.settings.webAppUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(this.settings.adminPassword || "admin")}`;
+      const response = await fetch(urlWithToken, {
         method: "GET",
         mode: "cors"
       });
@@ -300,7 +301,7 @@ class ApiService {
       const response = await fetch(this.settings.webAppUrl, {
         method: "POST",
         mode: "cors",
-        body: JSON.stringify({ action, payload })
+        body: JSON.stringify({ action, payload, token: this.settings.adminPassword || "admin" })
       });
 
       if (!response.ok) {
@@ -609,7 +610,7 @@ class ApiService {
         const response = await fetch(this.settings.webAppUrl, {
           method: "POST",
           mode: "cors",
-          body: JSON.stringify({ action: item.action, payload: item.payload })
+          body: JSON.stringify({ action: item.action, payload: item.payload, token: this.settings.adminPassword || "admin" })
         });
 
         if (!response.ok) {

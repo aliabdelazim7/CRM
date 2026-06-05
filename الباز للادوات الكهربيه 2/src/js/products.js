@@ -168,12 +168,12 @@ window.renderProducts = function() {
 
     return `
       <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
-        <td class="py-3 px-6 font-mono font-bold text-slate-600">${p["Product ID"]}</td>
+        <td class="py-3 px-6 font-mono font-bold text-slate-600">${escapeHtml(p["Product ID"])}</td>
         <td class="py-3 px-6 text-right">
-          <div class="font-bold text-slate-900">${p["Product Name"]}</div>
+          <div class="font-bold text-slate-900">${escapeHtml(p["Product Name"])}</div>
         </td>
-        <td class="py-3 px-6 text-slate-500 text-right">${p["Category"]}</td>
-        <td class="py-3 px-6 text-slate-500 text-right">${p["Supplier"] || "-"}</td>
+        <td class="py-3 px-6 text-slate-500 text-right">${escapeHtml(p["Category"])}</td>
+        <td class="py-3 px-6 text-slate-500 text-right">${escapeHtml(p["Supplier"] || "-")}</td>
         <td class="py-3 px-6 text-left font-mono font-medium">${formatCurrency(p["Purchase Price"])}</td>
         <td class="py-3 px-6 text-left font-mono font-bold text-slate-900">${formatCurrency(p["Selling Price"])}</td>
         <td class="py-3 px-6 text-left font-mono font-medium text-emerald-600">+${formatCurrency(profit)}</td>
@@ -232,7 +232,7 @@ function populateCategoryFilters(products) {
   if (categoryFilter) {
     const selected = categoryFilter.value;
     categoryFilter.innerHTML = `<option value="All">جميع الأقسام</option>` + 
-      categories.map(c => `<option value="${c}">${c}</option>`).join("");
+      categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
     if (categories.includes(selected)) {
       categoryFilter.value = selected;
     } else {
@@ -242,7 +242,7 @@ function populateCategoryFilters(products) {
 
   const datalist = document.getElementById("categories-datalist");
   if (datalist) {
-    datalist.innerHTML = categories.map(c => `<option value="${c}"></option>`).join("");
+    datalist.innerHTML = categories.map(c => `<option value="${escapeHtml(c)}"></option>`).join("");
   }
 }
 
@@ -448,7 +448,7 @@ function renderCategoriesModalList() {
 
     return `
       <div class="flex items-center justify-between bg-white border border-slate-200/80 p-2 rounded-lg text-xs hover:border-slate-300 transition-all">
-        <span class="font-bold text-slate-700">${cat}</span>
+        <span class="font-bold text-slate-700">${escapeHtml(cat)}</span>
         <div class="flex items-center space-x-reverse space-x-1.5">
           ${deleteBtnHtml}
         </div>
