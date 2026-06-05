@@ -426,7 +426,7 @@ function populatePayModalCustomerDropdown() {
   const currentCatalogSelect = document.getElementById("pos-customer-select")?.value || "GENERIC";
 
   select.innerHTML = `<option value="GENERIC">عميل نقدي (عام)</option>` + 
-    activeCustomers.map(c => `<option value="${escapeHtml(c["Customer ID"])}">${escapeHtml(c["Name"]} (${escapeHtml(c["Phone Number"])})</option>`).join("");
+    activeCustomers.map(c => `<option value="${escapeHtml(c["Customer ID"])}">${escapeHtml(c["Name"])} (${escapeHtml(c["Phone Number"])})</option>`).join("");
   
   select.value = currentCatalogSelect;
 }
