@@ -909,6 +909,16 @@ window.initAuth = function() {
   const loginOverlay = document.getElementById("login-overlay");
   if (!loginOverlay) return;
 
+  // Force logout old sessions (migrating to new credentials version)
+  const CREDENTIALS_VERSION = "v1_el7oksh";
+  if (localStorage.getItem("elbaz_credentials_ver") !== CREDENTIALS_VERSION) {
+    localStorage.removeItem("elbaz_session_active");
+    sessionStorage.removeItem("elbaz_session_active");
+    localStorage.removeItem("elbaz_demo_mode");
+    sessionStorage.removeItem("elbaz_demo_mode");
+    localStorage.setItem("elbaz_credentials_ver", CREDENTIALS_VERSION);
+  }
+
   const sessionActive = localStorage.getItem("elbaz_session_active") === "true" || sessionStorage.getItem("elbaz_session_active") === "true";
   if (sessionActive) {
     loginOverlay.classList.add("hidden");
