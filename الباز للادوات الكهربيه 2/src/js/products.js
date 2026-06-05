@@ -79,6 +79,7 @@ window.renderProducts = function() {
     const matchesSearch = 
       (p["Product Name"] && String(p["Product Name"]).toLowerCase().includes(searchQuery)) ||
       (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(searchQuery)) ||
+      (p["Barcode"] && String(p["Barcode"]).toLowerCase().includes(searchQuery)) ||
       (p["Supplier"] && String(p["Supplier"]).toLowerCase().includes(searchQuery));
     
     const matchesCategory = categoryFilter === "All" || p["Category"] === categoryFilter;

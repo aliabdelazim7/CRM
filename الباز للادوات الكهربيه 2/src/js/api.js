@@ -320,6 +320,14 @@ class ApiService {
         throw new Error(resJson.error || "Action failed on server");
       }
     } catch (error) {
+      if (error.message && error.message.includes("Unauthorized")) {
+        console.error(`API Action [${action}] unauthorized:`, error);
+        if (window.showToast) {
+          showToast("خطأ في المصادقة: كلمة مرور المدير غير صحيحة. يرجى التحقق من الإعدادات.", "error");
+        }
+        throw error;
+      }
+
       console.error(`API Action [${action}] failed. Storing in sync queue:`, error);
       
       // Execute locally first to keep UI responsive and updated
@@ -625,10 +633,24 @@ class ApiService {
             this.saveLocalDb();
           }
         } else {
+          if (resJson.error && resJson.error.includes("Unauthorized")) {
+            console.error("API Queue: Authentication failed. Halting queue processing.");
+            if (window.showToast) {
+              showToast("فشلت مزامنة المعاملات المعلقة بسبب خطأ في التحقق من كلمة مرور المدير.", "error");
+            }
+            break; // Halt processing, keep this and subsequent actions in queue
+          }
           console.warn(`API Queue: Action [${item.action}] rejected by sheet:`, resJson.error);
           successCount++; // Skip rejected payload to avoid blocking queue
         }
       } catch (err) {
+        if (err.message && err.message.includes("Unauthorized")) {
+          console.error("API Queue: Authentication error caught. Halting queue processing.");
+          if (window.showToast) {
+            showToast("فشلت مزامنة المعاملات المعلقة بسبب خطأ في التحقق من كلمة مرور المدير.", "error");
+          }
+          break; // Halt processing, keep this and subsequent actions in queue
+        }
         console.warn(`API Queue: Failed to sync action [${item.action}] due to connection:`, err);
         break; // Retry later when network is stable
       }

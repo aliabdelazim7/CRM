@@ -360,6 +360,12 @@ window.archiveCustomer = async function(customerId) {
   const custObj = window.appState.db.Customers.find(c => c["Customer ID"] === customerId);
   if (!custObj) return;
 
+  const balance = parseFloat(custObj["Outstanding Balance"]) || 0;
+  if (balance > 0) {
+    alert(`تنبيه: لا يمكن أرشفة هذا العميل بسبب وجود مديونية مستحقة بقيمة ${formatCurrency(balance)}، يرجى تسوية الحساب أولاً.`);
+    return;
+  }
+
   const confirmed = confirm(`هل أنت متأكد من أرشفة العميل: ${custObj["Name"]}؟\nسيتم استبعاد حسابه من البحث ولكن يتم الاحتفاظ بجميع فواتيره التشغيلية ومسحوباته للمراجعة المالية.`);
   if (!confirmed) return;
 

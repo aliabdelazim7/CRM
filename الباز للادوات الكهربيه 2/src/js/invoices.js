@@ -6,7 +6,40 @@
 let posCart = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("pos-product-search")?.addEventListener("input", handlePOSSearch);
+  const posSearchInput = document.getElementById("pos-product-search");
+  if (posSearchInput) {
+    posSearchInput.addEventListener("input", handlePOSSearch);
+    
+    // Barcode scanner keypress listener (Enter interceptor)
+    posSearchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const query = posSearchInput.value.trim().toLowerCase();
+        if (query) {
+          const products = window.appState.db.Products || [];
+          const match = products.find(p => 
+            (p["Status"] || "Active") !== "Archived" && (
+              (p["Barcode"] && String(p["Barcode"]).toLowerCase() === query) ||
+              (p["Product ID"] && String(p["Product ID"]).toLowerCase() === query)
+            )
+          );
+          if (match) {
+            const qty = parseFloat(match["Current Quantity"]) || 0;
+            if (qty <= 0) {
+              showToast("عذراً: المنتج غير متوفر بالمخزن حالياً.", "warning");
+            } else {
+              addProductToCart(match["Product ID"]);
+            }
+            posSearchInput.value = "";
+            renderPOSCatalog();
+          } else {
+            showToast("لم يتم العثور على منتج يطابق هذا الباركود أو الكود.", "warning");
+          }
+        }
+      }
+    });
+  }
+
   document.getElementById("pos-category-filter")?.addEventListener("change", renderPOSCatalog);
   document.getElementById("pos-clear-cart-btn")?.addEventListener("click", clearPOSCart);
   
@@ -100,6 +133,7 @@ function renderPOSCatalog() {
     const matchesSearch = 
       (p["Product Name"] && String(p["Product Name"]).toLowerCase().includes(query)) ||
       (p["Product ID"] && String(p["Product ID"]).toLowerCase().includes(query)) ||
+      (p["Barcode"] && String(p["Barcode"]).toLowerCase().includes(query)) ||
       (p["Supplier"] && String(p["Supplier"]).toLowerCase().includes(query));
 
     return isNotArchived && matchesCategory && matchesSearch;
