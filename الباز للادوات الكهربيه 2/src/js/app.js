@@ -230,8 +230,20 @@ function initGlobalEvents() {
       const correctEmail = currentConfig.adminEmail || "admin@elbaz.com";
       const correctPass = currentConfig.adminPassword || "admin";
 
-      if (email === correctEmail && pass === correctPass) {
+      if (email === "demo@elbaz.com" && pass === "demo") {
         localStorage.setItem("elbaz_session_active", "true");
+        localStorage.setItem("elbaz_demo_mode", "true");
+        // Reload settings and database under sandboxed keys
+        api.settings = api.loadConfig();
+        api.db = api.loadLocalDb();
+        showToast("تم تسجيل الدخول في وضع العرض التجريبي (Demo Mode)", "success");
+        initAuth();
+      } else if (email === correctEmail && pass === correctPass) {
+        localStorage.setItem("elbaz_session_active", "true");
+        localStorage.setItem("elbaz_demo_mode", "false");
+        // Reload real settings and database
+        api.settings = api.loadConfig();
+        api.db = api.loadLocalDb();
         showToast("تم تسجيل الدخول بنجاح", "success");
         initAuth();
       } else {
@@ -266,6 +278,7 @@ function initGlobalEvents() {
       const confirmLogout = confirm("هل تريد تسجيل الخروج من النظام بالفعل؟");
       if (confirmLogout) {
         localStorage.removeItem("elbaz_session_active");
+        localStorage.removeItem("elbaz_demo_mode");
         location.reload();
       }
     });
@@ -381,8 +394,21 @@ function loadSettingsFromConfig() {
   const headerCurrency = document.getElementById("header-currency-code");
   const loginTitle = document.getElementById("login-business-title");
   
-  if (navTitle) navTitle.textContent = window.appState.settings.businessName;
-  if (headerName) headerName.textContent = window.appState.settings.businessName;
+  const isDemo = localStorage.getItem("elbaz_demo_mode") === "true";
+  if (navTitle) {
+    if (isDemo) {
+      navTitle.innerHTML = window.appState.settings.businessName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
+    } else {
+      navTitle.textContent = window.appState.settings.businessName;
+    }
+  }
+  if (headerName) {
+    if (isDemo) {
+      headerName.innerHTML = window.appState.settings.businessName + ' <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-amber-200 mr-1.5">وضع تجريبي</span>';
+    } else {
+      headerName.textContent = window.appState.settings.businessName;
+    }
+  }
   if (headerCurrency) headerCurrency.textContent = `العملة: ${window.appState.settings.currency}`;
   if (loginTitle) loginTitle.textContent = window.appState.settings.businessName;
 

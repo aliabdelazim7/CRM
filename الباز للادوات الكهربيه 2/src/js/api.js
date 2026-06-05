@@ -106,7 +106,6 @@ class ApiService {
     this.settings = this.loadConfig();
     this.db = this.loadLocalDb();
     this.cleanupLocalArchivedCustomers();
-    this.isMockMode = !this.settings.webAppUrl;
     this.syncListeners = [];
     this.isProcessingQueue = false;
 
@@ -121,15 +120,21 @@ class ApiService {
     }, 3000);
   }
 
+  get isMockMode() {
+    return (localStorage.getItem("elbaz_demo_mode") === "true") || !this.settings.webAppUrl;
+  }
+
   loadConfig() {
-    const data = localStorage.getItem(API_CONFIG_KEY);
+    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const configKey = isDemoMode ? "elbaz_demo_settings" : API_CONFIG_KEY;
+    const data = localStorage.getItem(configKey);
     if (data) {
       try {
         const config = JSON.parse(data);
         let modified = false;
         // Force update config with defaults if webAppUrl is blank
         if (!config.webAppUrl) {
-          config.webAppUrl = defaultSettings.webAppUrl;
+          config.webAppUrl = isDemoMode ? "" : defaultSettings.webAppUrl;
           config.businessName = defaultSettings.businessName;
           config.address = defaultSettings.address;
           config.phone = defaultSettings.phone;
@@ -147,7 +152,7 @@ class ApiService {
           modified = true;
         }
         if (modified) {
-          localStorage.setItem(API_CONFIG_KEY, JSON.stringify(config));
+          localStorage.setItem(configKey, JSON.stringify(config));
         }
         return config;
       } catch (e) {
@@ -155,18 +160,25 @@ class ApiService {
       }
     }
     // Setup defaults if empty
-    localStorage.setItem(API_CONFIG_KEY, JSON.stringify(defaultSettings));
-    return defaultSettings;
+    const initialSettings = { ...defaultSettings };
+    if (isDemoMode) {
+      initialSettings.webAppUrl = ""; // Force mock mode in demo mode by default
+    }
+    localStorage.setItem(configKey, JSON.stringify(initialSettings));
+    return initialSettings;
   }
 
   saveConfig(newSettings) {
+    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const configKey = isDemoMode ? "elbaz_demo_settings" : API_CONFIG_KEY;
     this.settings = { ...this.settings, ...newSettings };
-    localStorage.setItem(API_CONFIG_KEY, JSON.stringify(this.settings));
-    this.isMockMode = !this.settings.webAppUrl;
+    localStorage.setItem(configKey, JSON.stringify(this.settings));
   }
 
   loadLocalDb() {
-    const data = localStorage.getItem(LOCAL_DB_KEY);
+    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const dbKey = isDemoMode ? "elbaz_demo_database" : LOCAL_DB_KEY;
+    const data = localStorage.getItem(dbKey);
     if (data) {
       try {
         const db = JSON.parse(data);
@@ -180,7 +192,7 @@ class ApiService {
       }
     }
     // Populate with demo data on first load
-    localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(demoDatabase));
+    localStorage.setItem(dbKey, JSON.stringify(demoDatabase));
     return normalizeDbDates(JSON.parse(JSON.stringify(demoDatabase)));
   }
 
@@ -209,7 +221,9 @@ class ApiService {
   }
 
   saveLocalDb() {
-    localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(this.db));
+    const isDemoMode = localStorage.getItem("elbaz_demo_mode") === "true";
+    const dbKey = isDemoMode ? "elbaz_demo_database" : LOCAL_DB_KEY;
+    localStorage.setItem(dbKey, JSON.stringify(this.db));
   }
 
   registerSyncListener(callback) {
