@@ -6,6 +6,16 @@
 let posCart = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize suspended carts list in appState if not defined
+  if (window.appState && !window.appState.suspendedCarts) {
+    try {
+      const saved = localStorage.getItem("elbaz_suspended_carts");
+      window.appState.suspendedCarts = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      window.appState.suspendedCarts = [];
+    }
+  }
+
   const posSearchInput = document.getElementById("pos-product-search");
   if (posSearchInput) {
     posSearchInput.addEventListener("input", handlePOSSearch);
@@ -680,15 +690,7 @@ window.printInvoice = printInvoice;
 
 
 
-// Initialize suspended carts list in appState if not defined
-if (!window.appState.suspendedCarts) {
-  try {
-    const saved = localStorage.getItem("elbaz_suspended_carts");
-    window.appState.suspendedCarts = saved ? JSON.parse(saved) : [];
-  } catch (e) {
-    window.appState.suspendedCarts = [];
-  }
-}
+
 
 /**
  * Suspends the active POS cart and saves it to localStorage
